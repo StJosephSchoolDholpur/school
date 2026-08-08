@@ -457,6 +457,9 @@ export async function saveTeacherRecord(t: Omit<Teacher, "id"> & { id?: string }
       const { error } = await supabase.from("teachers").upsert([record]);
       if (error) {
         console.error("Supabase teacher save error:", error);
+        if (error.code === "42P01" || error.message?.includes("relation \"public.teachers\" does not exist")) {
+          alert("⚠️ Supabase 'teachers' table not found! Please run the SQL snippet in Supabase SQL Editor.");
+        }
       }
     } catch (e) {
       console.error("Supabase teacher save exception:", e);
