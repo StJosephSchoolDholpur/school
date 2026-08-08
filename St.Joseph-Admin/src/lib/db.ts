@@ -22,6 +22,8 @@ export interface Teacher {
   photo_url?: string;
   email?: string;
   phone?: string;
+  joining_date?: string;
+  is_active?: boolean;
   wishes?: string;
   created_at?: string;
 }
@@ -29,11 +31,18 @@ export interface Teacher {
 export interface Student {
   id: string;
   name: string;
+  student_name?: string;
+  admission_no?: string;
   class: string;
   section?: string;
   roll_no?: string;
   dob: string; // YYYY-MM-DD
+  father_name?: string;
+  mother_name?: string;
+  parent_mobile?: string;
+  address?: string;
   photo_url?: string;
+  active_status?: boolean;
   wishes?: string;
   created_at?: string;
 }
@@ -448,6 +457,8 @@ export async function saveTeacherRecord(t: Omit<Teacher, "id"> & { id?: string }
     photo_url: t.photo_url || "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=400&q=80",
     email: t.email || "",
     phone: t.phone || "",
+    joining_date: t.joining_date || new Date().toISOString().split("T")[0],
+    is_active: t.is_active ?? true,
     wishes: t.wishes || "Happy Birthday!",
     created_at: new Date().toISOString(),
   };
@@ -462,6 +473,8 @@ export async function saveTeacherRecord(t: Omit<Teacher, "id"> & { id?: string }
         photo_url: record.photo_url,
         email: record.email,
         phone: record.phone,
+        joining_date: record.joining_date,
+        is_active: record.is_active,
         wishes: record.wishes,
       };
       if (t.id && !t.id.startsWith("t_")) {
@@ -514,11 +527,18 @@ export async function saveStudentRecord(s: Omit<Student, "id"> & { id?: string }
   const record: Student = {
     id: s.id || `s_${Date.now()}`,
     name: s.name,
+    student_name: s.student_name || s.name,
+    admission_no: s.admission_no || s.roll_no || `SJ-${Date.now().toString().slice(-4)}`,
     class: s.class,
     section: s.section || "A",
     roll_no: s.roll_no || "",
     dob: s.dob,
+    father_name: s.father_name || "",
+    mother_name: s.mother_name || "",
+    parent_mobile: s.parent_mobile || "",
+    address: s.address || "",
     photo_url: s.photo_url || "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=400&q=80",
+    active_status: s.active_status ?? true,
     wishes: s.wishes || "Happy Birthday!",
     created_at: new Date().toISOString(),
   };
@@ -527,11 +547,18 @@ export async function saveStudentRecord(s: Omit<Student, "id"> & { id?: string }
     try {
       const dbPayload: any = {
         name: record.name,
+        student_name: record.student_name,
+        admission_no: record.admission_no,
         class: record.class,
         section: record.section,
         roll_no: record.roll_no,
         dob: record.dob,
+        father_name: record.father_name,
+        mother_name: record.mother_name,
+        parent_mobile: record.parent_mobile,
+        address: record.address,
         photo_url: record.photo_url,
+        active_status: record.active_status,
         wishes: record.wishes,
       };
       if (s.id && !s.id.startsWith("s_")) {

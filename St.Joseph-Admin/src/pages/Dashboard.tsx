@@ -149,10 +149,10 @@ export const Dashboard: React.FC = () => {
   });
 
   // 2. TEACHER STATE
-  const [newTeacher, setNewTeacher] = useState({ name: "", designation: "", department: "", dob: "", wishes: "" });
+  const [newTeacher, setNewTeacher] = useState({ name: "", designation: "", department: "", dob: "", phone: "", email: "", wishes: "" });
 
   // 3. STUDENT STATE
-  const [newStudent, setNewStudent] = useState({ name: "", class: "", dob: "", wishes: "" });
+  const [newStudent, setNewStudent] = useState({ name: "", class: "Class I", section: "A", roll_no: "", admission_no: "", dob: "", father_name: "", mother_name: "", parent_mobile: "", address: "", wishes: "" });
 
   // 4. ROUTE STATE
   const [newRoute, setNewRoute] = useState({ area: "", busNo: "", stops: "", pickupTime: "07:00 AM", driverName: "", driverPhone: "" });
@@ -220,7 +220,7 @@ export const Dashboard: React.FC = () => {
     if (!newTeacher.name || !newTeacher.dob) return alert("Fill teacher name & DOB!");
     const saved = await saveTeacherRecord(newTeacher);
     setTeachers([saved, ...teachers]);
-    setNewTeacher({ name: "", designation: "", department: "", dob: "", wishes: "" });
+    setNewTeacher({ name: "", designation: "", department: "", dob: "", phone: "", email: "", wishes: "" });
   };
 
   const handleDeleteTeacher = async (id: string) => {
@@ -234,7 +234,7 @@ export const Dashboard: React.FC = () => {
     if (!newStudent.name || !newStudent.dob) return alert("Fill student name & DOB!");
     const saved = await saveStudentRecord(newStudent);
     setStudents([saved, ...students]);
-    setNewStudent({ name: "", class: "", dob: "", wishes: "" });
+    setNewStudent({ name: "", class: "Class I", section: "A", roll_no: "", admission_no: "", dob: "", father_name: "", mother_name: "", parent_mobile: "", address: "", wishes: "" });
   };
 
   const handleDeleteStudent = async (id: string) => {
@@ -824,12 +824,42 @@ export const Dashboard: React.FC = () => {
                   />
                 </div>
                 <div>
+                  <label className="block text-slate-400 font-bold mb-1">Department</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Science & Math"
+                    value={newTeacher.department}
+                    onChange={(e) => setNewTeacher({ ...newTeacher, department: e.target.value })}
+                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
+                  />
+                </div>
+                <div>
                   <label className="block text-slate-400 font-bold mb-1">Date of Birth (DOB) *</label>
                   <input
                     type="date"
                     value={newTeacher.dob}
                     onChange={(e) => setNewTeacher({ ...newTeacher, dob: e.target.value })}
                     required
+                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-400 font-bold mb-1">WhatsApp Phone No.</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. +91 9829123456"
+                    value={newTeacher.phone}
+                    onChange={(e) => setNewTeacher({ ...newTeacher, phone: e.target.value })}
+                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-400 font-bold mb-1">Email Address</label>
+                  <input
+                    type="email"
+                    placeholder="e.g. teacher@stjoseph.com"
+                    value={newTeacher.email}
+                    onChange={(e) => setNewTeacher({ ...newTeacher, email: e.target.value })}
                     className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
                   />
                 </div>
@@ -848,8 +878,10 @@ export const Dashboard: React.FC = () => {
                     <Trash2 className="w-4 h-4" />
                   </button>
                   <h4 className="font-bold text-white text-sm">{t.name}</h4>
-                  <p className="text-xs text-amber-400">{t.designation}</p>
-                  <p className="text-xs text-slate-400">DOB: {t.dob}</p>
+                  <p className="text-xs text-amber-400 font-bold">{t.designation} {t.department ? `(${t.department})` : ""}</p>
+                  <p className="text-xs text-slate-400">📅 DOB: {t.dob}</p>
+                  {t.phone && <p className="text-xs text-emerald-400">📲 Mobile: {t.phone}</p>}
+                  {t.email && <p className="text-xs text-slate-400">✉️ Email: {t.email}</p>}
                 </div>
               ))}
             </div>
@@ -863,7 +895,7 @@ export const Dashboard: React.FC = () => {
               <h3 className="font-heading font-bold text-white text-lg flex items-center gap-2">
                 <Plus className="w-5 h-5 text-amber-400" /> Add Student & Set Birthday
               </h3>
-              <form onSubmit={handleAddStudent} className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+              <form onSubmit={handleAddStudent} className="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs">
                 <div>
                   <label className="block text-slate-400 font-bold mb-1">Student Full Name *</label>
                   <input
@@ -879,12 +911,31 @@ export const Dashboard: React.FC = () => {
                   <label className="block text-slate-400 font-bold mb-1">Class *</label>
                   <input
                     type="text"
-                    placeholder="e.g. Class X-A"
+                    placeholder="e.g. Class I, Class X"
                     value={newStudent.class}
                     onChange={(e) => setNewStudent({ ...newStudent, class: e.target.value })}
                     required
                     className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
                   />
+                </div>
+                <div>
+                  <label className="block text-slate-400 font-bold mb-1">Section / Roll No</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Sec A"
+                      value={newStudent.section}
+                      onChange={(e) => setNewStudent({ ...newStudent, section: e.target.value })}
+                      className="w-1/2 p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Roll 101"
+                      value={newStudent.roll_no}
+                      onChange={(e) => setNewStudent({ ...newStudent, roll_no: e.target.value })}
+                      className="w-1/2 p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
+                    />
+                  </div>
                 </div>
                 <div>
                   <label className="block text-slate-400 font-bold mb-1">Date of Birth (DOB) *</label>
@@ -896,8 +947,38 @@ export const Dashboard: React.FC = () => {
                     className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
                   />
                 </div>
-                <div className="md:col-span-3">
-                  <button type="submit" className="w-full py-3 bg-amber-500 text-slate-950 font-bold rounded-xl text-xs">
+                <div>
+                  <label className="block text-slate-400 font-bold mb-1">Father's Name</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Mr. Rajendra Sharma"
+                    value={newStudent.father_name}
+                    onChange={(e) => setNewStudent({ ...newStudent, father_name: e.target.value })}
+                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-400 font-bold mb-1">Parent Mobile (WhatsApp)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. +91 9829123456"
+                    value={newStudent.parent_mobile}
+                    onChange={(e) => setNewStudent({ ...newStudent, parent_mobile: e.target.value })}
+                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-400 font-bold mb-1">Admission / SR No.</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. SJ-2026-101"
+                    value={newStudent.admission_no}
+                    onChange={(e) => setNewStudent({ ...newStudent, admission_no: e.target.value })}
+                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
+                  />
+                </div>
+                <div className="flex items-end">
+                  <button type="submit" className="w-full py-3 bg-amber-500 text-slate-950 font-bold rounded-xl text-xs shadow-md">
                     Save Student Record
                   </button>
                 </div>
@@ -1040,9 +1121,17 @@ export const Dashboard: React.FC = () => {
                           .map((s) => (
                             <div key={s.id} className="p-4 bg-slate-950 rounded-2xl border border-slate-800 flex items-center justify-between gap-3 hover:border-slate-700 transition-all">
                               <div className="space-y-1">
-                                <h4 className="font-bold text-white text-sm">{s.name}</h4>
-                                <p className="text-xs text-amber-400">DOB: <span className="font-mono">{s.dob || "N/A"}</span></p>
-                                <p className="text-[11px] text-slate-400">Class: {s.class}</p>
+                                <div className="flex items-center gap-2">
+                                  <h4 className="font-bold text-white text-sm">{s.name}</h4>
+                                  {(s.admission_no || s.roll_no) && (
+                                    <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 font-mono">
+                                      SR: {s.admission_no || s.roll_no}
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-xs text-slate-400">📅 DOB: <span className="font-mono text-slate-300">{s.dob || "N/A"}</span></p>
+                                {s.father_name && <p className="text-xs text-slate-400">👤 Father: <span className="text-slate-300 font-medium">{s.father_name}</span></p>}
+                                {s.parent_mobile && <p className="text-xs text-emerald-400">📲 Mobile: <span className="font-mono">{s.parent_mobile}</span></p>}
                               </div>
                               <button
                                 onClick={() => handleDeleteStudent(s.id)}
