@@ -17,7 +17,7 @@ export const Login: React.FC = () => {
     try {
       const ok = await login(email, password);
       if (!ok) {
-        setError("Invalid email/username or admin password. (Try: admin@stjoseph.com / admin123)");
+        setError("Invalid email/username or admin password.");
       }
     } catch (err) {
       setError("Authentication service error. Please try again.");
@@ -33,7 +33,7 @@ export const Login: React.FC = () => {
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
       <div className="w-full max-w-md bg-slate-900/90 border border-slate-800 rounded-3xl p-8 shadow-2xl backdrop-blur-xl space-y-6 relative z-10">
-        
+
         {/* Header Branding */}
         <div className="text-center space-y-2">
           <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-tr from-blue-600 to-amber-500 p-0.5 shadow-lg flex items-center justify-center">
@@ -99,10 +99,6 @@ export const Login: React.FC = () => {
             <KeyRound className="w-4 h-4" /> Sign In to Admin Panel
           </button>
         </form>
-
-        <div className="pt-2 text-center text-[11px] text-slate-500">
-          Default Admin Password: <span className="text-amber-400 font-mono">admin123</span>
-        </div>
 
       </div>
     </div>
