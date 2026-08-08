@@ -4,11 +4,11 @@ export const SUPABASE_URL =
   import.meta.env.VITE_SUPABASE_URL || "https://hzvwkrjydesdvkkcjupj.supabase.co";
 
 export const SUPABASE_ANON_KEY =
-  import.meta.env.VITE_SUPABASE_ANON_KEY || "";
+  import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6dndrcmp5ZGVzZHZra2NqdXBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2MjIzNTUsImV4cCI6MjEwMTE5ODM1NX0.7yAEaBfJ8mep8ZR-lM37HG1n5zZr5bSDeKxE6miRUlE";
 
 export const supabase = createClient(
   SUPABASE_URL,
-  SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.placeholder"
+  SUPABASE_ANON_KEY
 );
 
 // ─── Interfaces ─────────────────────────────────────────────────────────────
@@ -454,15 +454,30 @@ export async function saveTeacherRecord(t: Omit<Teacher, "id"> & { id?: string }
 
   if (SUPABASE_ANON_KEY) {
     try {
-      const { error } = await supabase.from("teachers").upsert([record]);
+      const dbPayload: any = {
+        name: record.name,
+        designation: record.designation,
+        department: record.department,
+        dob: record.dob,
+        photo_url: record.photo_url,
+        email: record.email,
+        phone: record.phone,
+        wishes: record.wishes,
+      };
+      if (t.id && !t.id.startsWith("t_")) {
+        dbPayload.id = t.id;
+      }
+
+      const { data, error } = await supabase.from("teachers").upsert([dbPayload]).select();
       if (error) {
         console.error("Supabase teacher save error:", error);
-        if (error.code === "42P01" || error.message?.includes("relation \"public.teachers\" does not exist")) {
-          alert("⚠️ Supabase 'teachers' table not found! Please run the SQL snippet in Supabase SQL Editor.");
-        }
+        alert("⚠️ Supabase Save Error: " + error.message);
+      } else if (data && data[0]?.id) {
+        record.id = data[0].id;
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error("Supabase teacher save exception:", e);
+      alert("⚠️ Connection Exception: " + e.message);
     }
   }
 
@@ -510,8 +525,28 @@ export async function saveStudentRecord(s: Omit<Student, "id"> & { id?: string }
 
   if (SUPABASE_ANON_KEY) {
     try {
-      await supabase.from("students").upsert([record]);
-    } catch (e) { }
+      const dbPayload: any = {
+        name: record.name,
+        class: record.class,
+        section: record.section,
+        roll_no: record.roll_no,
+        dob: record.dob,
+        photo_url: record.photo_url,
+        wishes: record.wishes,
+      };
+      if (s.id && !s.id.startsWith("s_")) {
+        dbPayload.id = s.id;
+      }
+
+      const { data, error } = await supabase.from("students").upsert([dbPayload]).select();
+      if (error) {
+        console.error("Supabase student save error:", error);
+      } else if (data && data[0]?.id) {
+        record.id = data[0].id;
+      }
+    } catch (e) {
+      console.error("Supabase student save exception:", e);
+    }
   }
 
   const list = getStorage("stj_students", initialStudents);
