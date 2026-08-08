@@ -447,14 +447,20 @@ export async function saveTeacherRecord(t: Omit<Teacher, "id"> & { id?: string }
     dob: t.dob,
     photo_url: t.photo_url || "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=400&q=80",
     email: t.email || "",
+    phone: t.phone || "",
     wishes: t.wishes || "Happy Birthday!",
     created_at: new Date().toISOString(),
   };
 
   if (SUPABASE_ANON_KEY) {
     try {
-      await supabase.from("teachers").upsert([record]);
-    } catch (e) { }
+      const { error } = await supabase.from("teachers").upsert([record]);
+      if (error) {
+        console.error("Supabase teacher save error:", error);
+      }
+    } catch (e) {
+      console.error("Supabase teacher save exception:", e);
+    }
   }
 
   const list = getStorage("stj_teachers", initialTeachers);

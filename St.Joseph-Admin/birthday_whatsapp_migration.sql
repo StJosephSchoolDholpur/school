@@ -81,14 +81,32 @@ CREATE TABLE IF NOT EXISTS public.notification_settings (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
--- 7. ENABLE ROW LEVEL SECURITY (RLS) & POLICIES FOR ALL TABLES
+-- 7. CREATE TEACHERS TABLE IF NOT EXISTS
+CREATE TABLE IF NOT EXISTS public.teachers (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  name TEXT NOT NULL,
+  designation TEXT NOT NULL,
+  department TEXT DEFAULT 'General',
+  dob TEXT,
+  email TEXT,
+  phone TEXT,
+  photo_url TEXT,
+  wishes TEXT DEFAULT 'Happy Birthday!',
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- 8. ENABLE ROW LEVEL SECURITY (RLS) & POLICIES FOR ALL TABLES
 ALTER TABLE public.students ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.teachers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.birthday_message_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notification_templates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notification_settings ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Public access on students" ON public.students;
 CREATE POLICY "Public access on students" ON public.students FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Public access on teachers" ON public.teachers;
+CREATE POLICY "Public access on teachers" ON public.teachers FOR ALL USING (true) WITH CHECK (true);
 
 DROP POLICY IF EXISTS "Public access on bday_logs" ON public.birthday_message_logs;
 CREATE POLICY "Public access on bday_logs" ON public.birthday_message_logs FOR ALL USING (true) WITH CHECK (true);
