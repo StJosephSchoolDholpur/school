@@ -47,6 +47,45 @@ export interface Student {
   created_at?: string;
 }
 
+export interface AttendanceRecord {
+  id: string;
+  student_id: string;
+  student_name: string;
+  class: string;
+  date: string;
+  status: "Present" | "Absent" | "Late" | "Leave";
+  remarks?: string;
+  created_at?: string;
+}
+
+export interface ExamMarkRecord {
+  id: string;
+  student_id: string;
+  student_name: string;
+  class: string;
+  exam_name: string;
+  subject: string;
+  max_marks: number;
+  marks_obtained: number;
+  grade?: string;
+  created_at?: string;
+}
+
+export interface FeeReceiptRecord {
+  id: string;
+  receipt_no: string;
+  student_id: string;
+  student_name: string;
+  class: string;
+  amount_paid: number;
+  payment_mode: "Cash" | "UPI" | "NetBanking" | "Cheque";
+  transaction_id?: string;
+  payment_date: string;
+  collected_by?: string;
+  remarks?: string;
+  created_at?: string;
+}
+
 export interface TCRecordData {
   id?: string;
   roll_no: string;
@@ -1059,4 +1098,108 @@ export async function deleteCalendar(id: string): Promise<void> {
   }
   const list = getStorage<CalendarEvent[]>("stj_calendar", []).filter((x) => x.id !== id);
   setStorage("stj_calendar", list);
+}
+
+// 13. Attendance Service
+export async function fetchAttendance(date?: string, className?: string): Promise<AttendanceRecord[]> {
+  if (SUPABASE_ANON_KEY) {
+    try {
+      let query = supabase.from("attendance").select("*");
+      if (date) query = query.eq("date", date);
+      if (className) query = query.eq("class", className);
+      const { data, error } = await query;
+      if (!error && data) return data;
+    } catch (e) {}
+  }
+  let list = getStorage<AttendanceRecord[]>("stj_attendance", []);
+  if (date) list = list.filter((r) => r.date === date);
+  if (className) list = list.filter((r) => r.class === className);
+  return list;
+}
+
+export async function saveAttendanceRecords(records: AttendanceRecord[]): Promise<void> {
+  if (SUPABASE_ANON_KEY) {
+    try {
+      const payloads = records.map((r) => cleanPayload(r));
+      await supabase.from("attendance").upsert(payloads);
+    } catch (e) {}
+  }
+  const existing = getStorage<AttendanceRecord[]>("stj_attendance", []);
+  const map = new Map(existing.map((x) => [`${x.student_id}_${x.date}`, x]));
+  for (const r of records) {
+    map.set(`${r.student_id}_${r.date}`, r);
+  }
+  setStorage("stj_attendance", Array.from(map.values()));
+}
+
+// 14. Exam Marks Service
+export async function fetchExamMarks(examName?: string, className?: string): Promise<ExamMarkRecord[]> {
+  if (SUPABASE_ANON_KEY) {
+    try {
+      let query = supabase.from("marks").select("*");
+      if (examName) query = query.eq("exam_name", examName);
+      if (className) query = query.eq("class", className);
+      const { data, error } = await query;
+      if (!error && data) return data;
+    } catch (e) {}
+  }
+  let list = getStorage<ExamMarkRecord[]>("stj_marks", []);
+  if (examName) list = list.filter((r) => r.exam_name === examName);
+  if (className) list = list.filter((r) => r.class === className);
+  return list;
+}
+
+export async function saveExamMarksRecords(records: ExamMarkRecord[]): Promise<void> {
+  if (SUPABASE_ANON_KEY) {
+    try {
+      const payloads = records.map((r) => cleanPayload(r));
+      await supabase.from("marks").upsert(payloads);
+    } catch (e) {}
+  }
+  const existing = getStorage<ExamMarkRecord[]>("stj_marks", []);
+  const map = new Map(existing.map((x) => [`${x.student_id}_${x.exam_name}_${x.subject}`, x]));
+  for (const r of records) {
+    map.set(`${r.student_id}_${r.exam_name}_${r.subject}`, r);
+  }
+  setStorage("stj_marks", Array.from(map.values()));
+}
+
+// 15. Fee Collections Service
+export async function fetchFeeCollections(): Promise<FeeReceiptRecord[]> {
+  if (SUPABASE_ANON_KEY) {
+    try {
+      const { data, error } = await supabase.from("fee_collections").select("*").order("created_at", { ascending: false });
+      if (!error && data) return data;
+    } catch (e) {}
+  }
+  return getStorage<FeeReceiptRecord[]>("stj_fee_collections", []);
+}
+
+export async function saveFeeCollectionRecord(receipt: Omit<FeeReceiptRecord, "id" | "receipt_no" | "created_at"> & { id?: string; receipt_no?: string }): Promise<FeeReceiptRecord> {
+  const newReceipt: FeeReceiptRecord = {
+    id: receipt.id || `rec_${Date.now()}`,
+    receipt_no: receipt.receipt_no || `REC-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+    student_id: receipt.student_id,
+    student_name: receipt.student_name,
+    class: receipt.class,
+    amount_paid: Number(receipt.amount_paid),
+    payment_mode: receipt.payment_mode || "Cash",
+    transaction_id: receipt.transaction_id || "",
+    payment_date: receipt.payment_date || new Date().toISOString().split("T")[0],
+    collected_by: receipt.collected_by || "Admin",
+    remarks: receipt.remarks || "",
+    created_at: new Date().toISOString(),
+  };
+
+  if (SUPABASE_ANON_KEY) {
+    try {
+      const payload = cleanPayload(newReceipt);
+      const { data } = await supabase.from("fee_collections").upsert([payload]).select().single();
+      if (data?.id) newReceipt.id = data.id;
+    } catch (e) {}
+  }
+  const list = getStorage<FeeReceiptRecord[]>("stj_fee_collections", []);
+  list.unshift(newReceipt);
+  setStorage("stj_fee_collections", list);
+  return newReceipt;
 }

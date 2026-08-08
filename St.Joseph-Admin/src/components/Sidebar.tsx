@@ -13,12 +13,19 @@ import {
   Calendar as CalendarIcon,
   LogOut,
   LayoutDashboard,
-  MessageSquare
+  MessageSquare,
+  UserCheck,
+  FileSpreadsheet,
+  Receipt,
+  UserCog
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 export type AdminTab =
   | "overview"
+  | "attendance"
+  | "examinations"
+  | "fee_collections"
   | "tc"
   | "teachers"
   | "students"
@@ -31,7 +38,8 @@ export type AdminTab =
   | "books"
   | "achievements"
   | "gallery"
-  | "calendar";
+  | "calendar"
+  | "rbac";
 
 interface SidebarProps {
   activeTab: AdminTab;
@@ -43,6 +51,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
 
   const menuItems: { id: AdminTab; label: string; icon: any; badge?: string }[] = [
     { id: "overview", label: "Dashboard Overview", icon: LayoutDashboard },
+    { id: "attendance", label: "Daily Attendance", icon: UserCheck, badge: "Live" },
+    { id: "examinations", label: "Exams & Marksheets", icon: FileSpreadsheet, badge: "New" },
+    { id: "fee_collections", label: "Collect Fee & Receipts", icon: Receipt, badge: "Billing" },
     { id: "tc", label: "TC Portal Manager", icon: FileCheck2 },
     { id: "teachers", label: "Teachers", icon: GraduationCap },
     { id: "students", label: "Students", icon: Users },
@@ -56,6 +67,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
     { id: "achievements", label: "Achievements", icon: Trophy },
     { id: "gallery", label: "Gallery Photos", icon: Image },
     { id: "calendar", label: "School Calendar", icon: CalendarIcon },
+    { id: "rbac", label: "Roles & Security", icon: UserCog },
   ];
 
   return (

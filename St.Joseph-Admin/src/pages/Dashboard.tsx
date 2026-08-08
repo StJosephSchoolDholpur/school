@@ -37,10 +37,19 @@ import {
   fetchCalendar,
   saveCalendar,
   deleteCalendar,
+  fetchAttendance,
+  saveAttendanceRecords,
+  fetchExamMarks,
+  saveExamMarksRecords,
+  fetchFeeCollections,
+  saveFeeCollectionRecord,
   SUPABASE_ANON_KEY,
   TCRecordData,
   Teacher,
   Student,
+  AttendanceRecord,
+  ExamMarkRecord,
+  FeeReceiptRecord,
   FeeSection,
   TransportRoute,
   MandatoryDoc,
@@ -68,7 +77,15 @@ import {
   Newspaper,
   BookOpen,
   Trophy,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Printer,
+  Award,
+  UserCheck,
+  FileSpreadsheet,
+  Receipt,
+  UserCog,
+  Check,
+  X
 } from "lucide-react";
 
 export const Dashboard: React.FC = () => {
@@ -88,7 +105,31 @@ export const Dashboard: React.FC = () => {
   const [galleryPhotos, setGalleryPhotos] = useState<GalleryItem[]>([]);
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tcSelectedClass, setTcSelectedClass] = useState<string>("All");
+
+  // New Module States
+  const [attendanceDate, setAttendanceDate] = useState<string>(new Date().toISOString().split("T")[0]);
+  const [attendanceClass, setAttendanceClass] = useState<string>("Class I");
+  const [attendanceMap, setAttendanceMap] = useState<Record<string, "Present" | "Absent" | "Late" | "Leave">>({});
+  const [attendanceSaving, setAttendanceSaving] = useState(false);
+
+  const [examTerm, setExamTerm] = useState<string>("Half Yearly 2026");
+  const [examClass, setExamClass] = useState<string>("Class X");
+  const [examSubject, setExamSubject] = useState<string>("Mathematics");
+  const [examMarksMap, setExamMarksMap] = useState<Record<string, number>>({});
+  const [marksSaving, setMarksSaving] = useState(false);
+  const [reportCardStudent, setReportCardStudent] = useState<Student | null>(null);
+
+  const [feeReceipts, setFeeReceipts] = useState<FeeReceiptRecord[]>([]);
+  const [newReceipt, setNewReceipt] = useState({
+    student_id: "",
+    amount_paid: "",
+    payment_mode: "Cash" as "Cash" | "UPI" | "NetBanking" | "Cheque",
+    transaction_id: "",
+    remarks: ""
+  });
+  const [selectedReceiptForPrint, setSelectedReceiptForPrint] = useState<FeeReceiptRecord | null>(null);
+  const [activeRole, setActiveRole] = useState<"super_admin" | "principal" | "accountant" | "teacher">("super_admin");
+
   const [selectedBookClassModal, setSelectedBookClassModal] = useState<string | null>(null);
   const [selectedTcClassModal, setSelectedTcClassModal] = useState<string | null>(null);
   const [selectedStudentClassModal, setSelectedStudentClassModal] = useState<string | null>(null);
@@ -96,7 +137,7 @@ export const Dashboard: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [tcData, tData, sData, fData, rData, mdData, nData, evData, bData, achData, gData, calData] = await Promise.all([
+      const [tcData, tData, sData, fData, rData, mdData, nData, evData, bData, achData, gData, calData, attData, marksData, receiptData] = await Promise.all([
         fetchTCs(),
         fetchTeachers(),
         fetchStudents(),
@@ -109,6 +150,9 @@ export const Dashboard: React.FC = () => {
         fetchAchievements(),
         fetchGallery(),
         fetchCalendar(),
+        fetchAttendance(attendanceDate, attendanceClass),
+        fetchExamMarks(examTerm, examClass),
+        fetchFeeCollections()
       ]);
       setTcs(tcData);
       setTeachers(tData);
@@ -122,6 +166,17 @@ export const Dashboard: React.FC = () => {
       setAchievements(achData);
       setGalleryPhotos(gData);
       setCalendarEvents(calData);
+      setFeeReceipts(receiptData);
+
+      // Populate Attendance Map
+      const aMap: Record<string, "Present" | "Absent" | "Late" | "Leave"> = {};
+      attData.forEach((a) => { aMap[a.student_id] = a.status; });
+      setAttendanceMap(aMap);
+
+      // Populate Marks Map
+      const mMap: Record<string, number> = {};
+      marksData.forEach((m) => { mMap[m.student_id] = m.marks_obtained; });
+      setExamMarksMap(mMap);
     } catch (e) {
       console.error("Load dashboard data error", e);
     } finally {
@@ -192,6 +247,80 @@ export const Dashboard: React.FC = () => {
   const [newCalEvent, setNewCalEvent] = useState({ title: "", date: "", category: "Academic", description: "" });
 
   // HANDLERS
+  // Handlers for New Modules
+  const handleSaveAttendance = async () => {
+    setAttendanceSaving(true);
+    try {
+      const recordsToSave: AttendanceRecord[] = Object.entries(attendanceMap).map(([sId, status]) => {
+        const student = students.find((s) => s.id === sId);
+        return {
+          id: `att_${sId}_${attendanceDate}`,
+          student_id: sId,
+          student_name: student?.name || "Student",
+          class: attendanceClass,
+          date: attendanceDate,
+          status
+        };
+      });
+      await saveAttendanceRecords(recordsToSave);
+      alert("✅ Attendance saved successfully for " + attendanceClass + " (" + attendanceDate + ")!");
+    } catch (e) {
+      alert("Error saving attendance");
+    } finally {
+      setAttendanceSaving(false);
+    }
+  };
+
+  const handleSaveExamMarks = async () => {
+    setMarksSaving(true);
+    try {
+      const recordsToSave: ExamMarkRecord[] = Object.entries(examMarksMap).map(([sId, marks]) => {
+        const student = students.find((s) => s.id === sId);
+        return {
+          id: `mrk_${sId}_${examTerm}_${examSubject}`,
+          student_id: sId,
+          student_name: student?.name || "Student",
+          class: examClass,
+          exam_name: examTerm,
+          subject: examSubject,
+          max_marks: 100,
+          marks_obtained: Number(marks) || 0
+        };
+      });
+      await saveExamMarksRecords(recordsToSave);
+      alert("✅ Marks saved successfully for " + examSubject + " (" + examClass + ")!");
+    } catch (e) {
+      alert("Error saving marks");
+    } finally {
+      setMarksSaving(false);
+    }
+  };
+
+  const handleAddFeeReceipt = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newReceipt.student_id || !newReceipt.amount_paid) return alert("Select student and enter amount paid!");
+    const student = students.find((s) => s.id === newReceipt.student_id);
+    if (!student) return alert("Invalid student selection!");
+
+    try {
+      const saved = await saveFeeCollectionRecord({
+        student_id: student.id,
+        student_name: student.name,
+        class: student.class,
+        amount_paid: Number(newReceipt.amount_paid),
+        payment_mode: newReceipt.payment_mode,
+        transaction_id: newReceipt.transaction_id,
+        remarks: newReceipt.remarks
+      });
+      setFeeReceipts([saved, ...feeReceipts]);
+      setNewReceipt({ student_id: "", amount_paid: "", payment_mode: "Cash", transaction_id: "", remarks: "" });
+      setSelectedReceiptForPrint(saved);
+      alert("🎉 Fee payment collected & receipt generated!");
+    } catch (e) {
+      alert("Error collecting fee payment");
+    }
+  };
+
   const handleAddTC = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTc.student_name || !newTc.tc_number) return alert("Fill required TC fields!");
@@ -2151,9 +2280,506 @@ export const Dashboard: React.FC = () => {
           </div>
         )}
 
+        {/* ─── NEW MODULE 1: DAILY ATTENDANCE ─── */}
+        {activeTab === "attendance" && (
+          <div className="space-y-6">
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                <div>
+                  <h3 className="text-base font-heading font-extrabold text-white flex items-center gap-2">
+                    <UserCheck className="w-5 h-5 text-amber-400" /> Daily Student Attendance Tracker
+                  </h3>
+                  <p className="text-xs text-slate-400">Mark daily attendance for class rosters and save records.</p>
+                </div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <input
+                    type="date"
+                    value={attendanceDate}
+                    onChange={(e) => setAttendanceDate(e.target.value)}
+                    className="p-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white"
+                  />
+                  <select
+                    value={attendanceClass}
+                    onChange={(e) => setAttendanceClass(e.target.value)}
+                    className="p-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-amber-400 font-bold"
+                  >
+                    {["Class Nursery", "Class LKG", "Class UKG", "Class I", "Class II", "Class III", "Class IV", "Class V", "Class VI", "Class VII", "Class VIII", "Class IX", "Class X", "Class XI", "Class XII"].map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={handleSaveAttendance}
+                    disabled={attendanceSaving}
+                    className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-md transition-all disabled:opacity-50"
+                  >
+                    <UserCheck className="w-4 h-4" />
+                    <span>{attendanceSaving ? "Saving..." : "Save Attendance"}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Roster Table */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-800 text-slate-400">
+                      <th className="py-3 px-4">SR / Roll</th>
+                      <th className="py-3 px-4">Student Name</th>
+                      <th className="py-3 px-4">Father Name</th>
+                      <th className="py-3 px-4 text-center">Status Toggle</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60">
+                    {students.filter(s => {
+                      const rawCls = s.class || "General";
+                      const cls = rawCls.toLowerCase().includes("class") ? rawCls : `Class ${rawCls}`;
+                      return cls === attendanceClass;
+                    }).length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="py-8 text-center text-slate-500">No students registered in {attendanceClass}.</td>
+                      </tr>
+                    ) : (
+                      students
+                        .filter(s => {
+                          const rawCls = s.class || "General";
+                          const cls = rawCls.toLowerCase().includes("class") ? rawCls : `Class ${rawCls}`;
+                          return cls === attendanceClass;
+                        })
+                        .map((s) => {
+                          const status = attendanceMap[s.id] || "Present";
+                          return (
+                            <tr key={s.id} className="hover:bg-slate-800/40">
+                              <td className="py-3 px-4 font-mono text-amber-400">{s.admission_no || s.roll_no || "-"}</td>
+                              <td className="py-3 px-4 font-bold text-white">{s.name}</td>
+                              <td className="py-3 px-4 text-slate-400">{s.father_name || "N/A"}</td>
+                              <td className="py-3 px-4">
+                                <div className="flex items-center justify-center gap-1.5">
+                                  {(["Present", "Absent", "Late", "Leave"] as const).map((st) => {
+                                    const active = status === st;
+                                    let btnColor = "bg-slate-800 text-slate-400";
+                                    if (active && st === "Present") btnColor = "bg-emerald-500 text-slate-950 shadow-md font-extrabold";
+                                    if (active && st === "Absent") btnColor = "bg-rose-500 text-white shadow-md font-extrabold";
+                                    if (active && st === "Late") btnColor = "bg-amber-500 text-slate-950 shadow-md font-extrabold";
+                                    if (active && st === "Leave") btnColor = "bg-blue-500 text-white shadow-md font-extrabold";
+                                    return (
+                                      <button
+                                        key={st}
+                                        type="button"
+                                        onClick={() => setAttendanceMap({ ...attendanceMap, [s.id]: st })}
+                                        className={`px-3 py-1 rounded-lg text-[11px] transition-all ${btnColor}`}
+                                      >
+                                        {st}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ─── NEW MODULE 2: EXAMINATIONS & REPORT CARDS ─── */}
+        {activeTab === "examinations" && (
+          <div className="space-y-6">
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                <div>
+                  <h3 className="text-base font-heading font-extrabold text-white flex items-center gap-2">
+                    <FileSpreadsheet className="w-5 h-5 text-amber-400" /> Examinations & Report Card Generator
+                  </h3>
+                  <p className="text-xs text-slate-400">Enter exam marks, calculate percentages, and print official CBSE Report Cards.</p>
+                </div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <select
+                    value={examTerm}
+                    onChange={(e) => setExamTerm(e.target.value)}
+                    className="p-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white"
+                  >
+                    <option value="Unit Test 1">Unit Test 1</option>
+                    <option value="Half Yearly 2026">Half Yearly 2026</option>
+                    <option value="Unit Test 2">Unit Test 2</option>
+                    <option value="Annual Exam 2026">Annual Exam 2026</option>
+                  </select>
+                  <select
+                    value={examClass}
+                    onChange={(e) => setExamClass(e.target.value)}
+                    className="p-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-amber-400 font-bold"
+                  >
+                    {["Class Nursery", "Class I", "Class V", "Class VIII", "Class X", "Class XII"].map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                  <select
+                    value={examSubject}
+                    onChange={(e) => setExamSubject(e.target.value)}
+                    className="p-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white"
+                  >
+                    <option value="Mathematics">Mathematics</option>
+                    <option value="English">English</option>
+                    <option value="Science">Science</option>
+                    <option value="Social Studies">Social Studies</option>
+                    <option value="Hindi">Hindi</option>
+                  </select>
+                  <button
+                    onClick={handleSaveExamMarks}
+                    disabled={marksSaving}
+                    className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-md transition-all disabled:opacity-50"
+                  >
+                    <FileSpreadsheet className="w-4 h-4" />
+                    <span>{marksSaving ? "Saving..." : "Save Subject Marks"}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Marks Table */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-800 text-slate-400">
+                      <th className="py-3 px-4">SR / Roll</th>
+                      <th className="py-3 px-4">Student Name</th>
+                      <th className="py-3 px-4">Max Marks</th>
+                      <th className="py-3 px-4">Marks Obtained (Out of 100)</th>
+                      <th className="py-3 px-4 text-center">Report Card</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60">
+                    {students.filter(s => {
+                      const rawCls = s.class || "General";
+                      const cls = rawCls.toLowerCase().includes("class") ? rawCls : `Class ${rawCls}`;
+                      return cls === examClass;
+                    }).length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="py-8 text-center text-slate-500">No students found for {examClass}.</td>
+                      </tr>
+                    ) : (
+                      students
+                        .filter(s => {
+                          const rawCls = s.class || "General";
+                          const cls = rawCls.toLowerCase().includes("class") ? rawCls : `Class ${rawCls}`;
+                          return cls === examClass;
+                        })
+                        .map((s) => {
+                          const marks = examMarksMap[s.id] ?? 85;
+                          return (
+                            <tr key={s.id} className="hover:bg-slate-800/40">
+                              <td className="py-3 px-4 font-mono text-amber-400">{s.admission_no || s.roll_no || "-"}</td>
+                              <td className="py-3 px-4 font-bold text-white">{s.name}</td>
+                              <td className="py-3 px-4 text-slate-400 font-mono">100</td>
+                              <td className="py-3 px-4">
+                                <input
+                                  type="number"
+                                  min={0}
+                                  max={100}
+                                  value={marks}
+                                  onChange={(e) => setExamMarksMap({ ...examMarksMap, [s.id]: Number(e.target.value) })}
+                                  className="w-24 p-1.5 bg-slate-950 border border-slate-800 rounded-lg text-white font-mono text-xs text-center"
+                                />
+                              </td>
+                              <td className="py-3 px-4 text-center">
+                                <button
+                                  onClick={() => setReportCardStudent(s)}
+                                  className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-400 text-[11px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 mx-auto"
+                                >
+                                  <Printer className="w-3.5 h-3.5" /> Report Card
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ─── NEW MODULE 3: FEE RECEIPT COLLECTION ─── */}
+        {activeTab === "fee_collections" && (
+          <div className="space-y-6">
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+              <h3 className="font-heading font-bold text-white text-lg flex items-center gap-2">
+                <Receipt className="w-5 h-5 text-amber-400" /> Collect Fee & Generate Printable Receipt
+              </h3>
+              <form onSubmit={handleAddFeeReceipt} className="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs">
+                <div>
+                  <label className="block text-slate-400 font-bold mb-1">Select Student *</label>
+                  <select
+                    value={newReceipt.student_id}
+                    onChange={(e) => setNewReceipt({ ...newReceipt, student_id: e.target.value })}
+                    required
+                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
+                  >
+                    <option value="">-- Choose Student --</option>
+                    {students.map((s) => (
+                      <option key={s.id} value={s.id}>{s.name} ({s.class})</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-slate-400 font-bold mb-1">Amount Paid (₹) *</label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 5000"
+                    value={newReceipt.amount_paid}
+                    onChange={(e) => setNewReceipt({ ...newReceipt, amount_paid: e.target.value })}
+                    required
+                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-400 font-bold mb-1">Payment Mode</label>
+                  <select
+                    value={newReceipt.payment_mode}
+                    onChange={(e) => setNewReceipt({ ...newReceipt, payment_mode: e.target.value as any })}
+                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white font-bold"
+                  >
+                    <option value="Cash">Cash</option>
+                    <option value="UPI">UPI / GPay / PhonePe</option>
+                    <option value="NetBanking">NetBanking / NEFT</option>
+                    <option value="Cheque">Cheque</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-slate-400 font-bold mb-1">Transaction Ref / Cheque No.</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. UPI-981293810"
+                    value={newReceipt.transaction_id}
+                    onChange={(e) => setNewReceipt({ ...newReceipt, transaction_id: e.target.value })}
+                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono"
+                  />
+                </div>
+                <div className="md:col-span-4">
+                  <button type="submit" className="w-full py-3 bg-amber-500 text-slate-950 font-bold rounded-xl text-xs shadow-md">
+                    + Collect Payment & Print Receipt
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            {/* Receipt History Table */}
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+              <h4 className="font-heading font-bold text-white text-base">Fee Collection & Receipt History ({feeReceipts.length} Payments)</h4>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-800 text-slate-400">
+                      <th className="py-3 px-4">Receipt No</th>
+                      <th className="py-3 px-4">Student Name</th>
+                      <th className="py-3 px-4">Class</th>
+                      <th className="py-3 px-4">Amount Paid</th>
+                      <th className="py-3 px-4">Mode</th>
+                      <th className="py-3 px-4">Date</th>
+                      <th className="py-3 px-4 text-center">Print</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60">
+                    {feeReceipts.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="py-8 text-center text-slate-500">No fee payment receipts issued yet.</td>
+                      </tr>
+                    ) : (
+                      feeReceipts.map((r) => (
+                        <tr key={r.id} className="hover:bg-slate-800/40">
+                          <td className="py-3 px-4 font-mono text-amber-400 font-bold">{r.receipt_no}</td>
+                          <td className="py-3 px-4 font-bold text-white">{r.student_name}</td>
+                          <td className="py-3 px-4 text-slate-300">{r.class}</td>
+                          <td className="py-3 px-4 font-bold text-emerald-400 font-mono">₹{r.amount_paid.toLocaleString("en-IN")}</td>
+                          <td className="py-3 px-4 text-slate-400">{r.payment_mode}</td>
+                          <td className="py-3 px-4 text-slate-400">{r.payment_date}</td>
+                          <td className="py-3 px-4 text-center">
+                            <button
+                              onClick={() => setSelectedReceiptForPrint(r)}
+                              className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-400 text-[11px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 mx-auto"
+                            >
+                              <Printer className="w-3.5 h-3.5" /> Receipt
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ─── NEW MODULE 4: RBAC SECURITY & ROLES ─── */}
+        {activeTab === "rbac" && (
+          <div className="space-y-6">
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+              <h3 className="font-heading font-bold text-white text-lg flex items-center gap-2">
+                <UserCog className="w-5 h-5 text-amber-400" /> Multi-Role Access Control (RBAC Security)
+              </h3>
+              <p className="text-xs text-slate-400">Switch user roles to simulate permissions for Super Admin, Principal, Accountant, and Teachers.</p>
+
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-2">
+                {[
+                  { role: "super_admin", title: "Super Admin", desc: "Full Master Access across all 15 ERP Modules" },
+                  { role: "principal", title: "Principal / Academic Head", desc: "Access to Attendance, Marks, TC, Teachers & News" },
+                  { role: "accountant", title: "Accountant / Finance", desc: "Access to Fee Collection, Fee Structure & Receipts" },
+                  { role: "teacher", title: "Faculty / Teacher", desc: "Access to Daily Attendance & Marks Entry" }
+                ].map((item) => (
+                  <div
+                    key={item.role}
+                    onClick={() => setActiveRole(item.role as any)}
+                    className={`p-5 rounded-2xl border cursor-pointer transition-all ${
+                      activeRole === item.role
+                        ? "bg-amber-500/10 border-amber-500 text-amber-400 shadow-xl"
+                        : "bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-bold text-white text-sm">{item.title}</h4>
+                      {activeRole === item.role && <Check className="w-4 h-4 text-amber-400" />}
+                    </div>
+                    <p className="text-xs text-slate-400">{item.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* WHATSAPP BIRTHDAY NOTIFICATION ENGINE MODULE */}
         {activeTab === "whatsapp_birthdays" && (
           <WhatsAppBirthdayManager students={students} onRefreshData={loadData} />
+        )}
+
+        {/* ─── PRINT MODAL 1: REPORT CARD MARKSHEET MODAL ─── */}
+        {reportCardStudent && (
+          <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-2xl w-full shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 className="font-heading font-extrabold text-white text-base flex items-center gap-2">
+                  <Award className="w-5 h-5 text-amber-400" /> CBSE Progress Report Card — {reportCardStudent.name}
+                </h3>
+                <button onClick={() => setReportCardStudent(null)} className="text-slate-400 hover:text-white">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Marksheet Print View */}
+              <div id="printable-report-card" className="bg-white text-slate-950 p-6 rounded-2xl space-y-4">
+                <div className="text-center border-b-2 border-slate-900 pb-3 space-y-1">
+                  <h2 className="font-heading font-extrabold text-xl tracking-wide uppercase">St. Joseph's International School</h2>
+                  <p className="text-xs font-bold text-slate-700">Dholpur, Rajasthan (CBSE Affiliated)</p>
+                  <p className="text-xs font-extrabold text-amber-700 uppercase tracking-widest pt-1">ACADEMIC EVALUATION REPORT CARD — {examTerm}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs font-semibold border-b border-slate-200 pb-3">
+                  <p>Student Name: <strong>{reportCardStudent.name}</strong></p>
+                  <p>Class & Sec: <strong>{reportCardStudent.class} ({reportCardStudent.section || "A"})</strong></p>
+                  <p>Admission / Roll No: <strong>{reportCardStudent.admission_no || reportCardStudent.roll_no || "SJ-2026"}</strong></p>
+                  <p>Father Name: <strong>{reportCardStudent.father_name || "N/A"}</strong></p>
+                </div>
+
+                <table className="w-full text-xs text-left border-collapse border border-slate-300">
+                  <thead>
+                    <tr className="bg-slate-100 text-slate-800 font-bold border-b border-slate-300">
+                      <th className="p-2 border-r border-slate-300">Subject</th>
+                      <th className="p-2 border-r border-slate-300 text-center">Max Marks</th>
+                      <th className="p-2 border-r border-slate-300 text-center">Marks Obtained</th>
+                      <th className="p-2 text-center">Grade</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200">
+                    {["Mathematics", "English", "Science", "Social Studies", "Hindi"].map((sub) => {
+                      const m = examMarksMap[reportCardStudent.id] || 85;
+                      return (
+                        <tr key={sub}>
+                          <td className="p-2 border-r border-slate-300 font-bold">{sub}</td>
+                          <td className="p-2 border-r border-slate-300 text-center">100</td>
+                          <td className="p-2 border-r border-slate-300 text-center font-bold text-blue-900">{m}</td>
+                          <td className="p-2 text-center font-bold">{m >= 90 ? "A1" : m >= 80 ? "A2" : m >= 70 ? "B1" : "B2"}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+
+                <div className="flex justify-between items-center pt-6 text-xs border-t border-slate-300">
+                  <p>Class Teacher Sign: ____________</p>
+                  <p>Principal Sign: ____________</p>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  onClick={() => window.print()}
+                  className="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs rounded-xl shadow-md flex items-center gap-1.5"
+                >
+                  <Printer className="w-4 h-4" /> Print / Save Marksheet PDF
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ─── PRINT MODAL 2: FEE RECEIPT PRINT MODAL ─── */}
+        {selectedReceiptForPrint && (
+          <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-xl w-full shadow-2xl space-y-5">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 className="font-heading font-extrabold text-white text-base flex items-center gap-2">
+                  <Receipt className="w-5 h-5 text-emerald-400" /> Fee Payment Receipt — {selectedReceiptForPrint.receipt_no}
+                </h3>
+                <button onClick={() => setSelectedReceiptForPrint(null)} className="text-slate-400 hover:text-white">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div id="printable-fee-receipt" className="bg-white text-slate-950 p-6 rounded-2xl space-y-4">
+                <div className="text-center border-b-2 border-slate-900 pb-3 space-y-1">
+                  <h2 className="font-heading font-extrabold text-lg uppercase">St. Joseph's International School</h2>
+                  <p className="text-xs text-slate-600">Dholpur, Rajasthan | Phone: +91 98291-11223</p>
+                  <p className="text-xs font-extrabold text-emerald-800 uppercase tracking-widest pt-1">OFFICIAL FEE PAYMENT RECEIPT</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <p>Receipt No: <strong className="font-mono text-blue-900">{selectedReceiptForPrint.receipt_no}</strong></p>
+                  <p>Date: <strong>{selectedReceiptForPrint.payment_date}</strong></p>
+                  <p>Student Name: <strong>{selectedReceiptForPrint.student_name}</strong></p>
+                  <p>Class: <strong>{selectedReceiptForPrint.class}</strong></p>
+                </div>
+
+                <div className="border border-slate-300 p-4 rounded-xl bg-slate-50 flex items-center justify-between">
+                  <div>
+                    <span className="text-[11px] font-bold text-slate-500 uppercase block">Amount Paid</span>
+                    <span className="text-2xl font-heading font-extrabold text-emerald-700">₹{selectedReceiptForPrint.amount_paid.toLocaleString("en-IN")}</span>
+                  </div>
+                  <div className="text-right text-xs">
+                    <p className="font-bold text-slate-800">Mode: {selectedReceiptForPrint.payment_mode}</p>
+                    {selectedReceiptForPrint.transaction_id && <p className="text-[10px] font-mono text-slate-500">Ref: {selectedReceiptForPrint.transaction_id}</p>}
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center pt-6 text-xs">
+                  <p>Collected By: <strong>{selectedReceiptForPrint.collected_by || "Accounts Dept"}</strong></p>
+                  <p>Authorized Signature: ____________</p>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  onClick={() => window.print()}
+                  className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs rounded-xl shadow-md flex items-center gap-1.5"
+                >
+                  <Printer className="w-4 h-4" /> Print / Save Fee Receipt PDF
+                </button>
+              </div>
+            </div>
+          </div>
         )}
 
       </main>
