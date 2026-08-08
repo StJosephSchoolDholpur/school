@@ -51,9 +51,10 @@ ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
 
 WORKDIR /app
 
-# Copy package files
+# Copy package files and scripts directory required by npm postinstall
 COPY package*.json ./
 COPY dashboard/package*.json ./dashboard/
+COPY scripts/ ./scripts/
 
 # Install dependencies
 RUN npm ci --include=dev
