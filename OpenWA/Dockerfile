@@ -1,7 +1,12 @@
 FROM node:20-slim
 
-# Install Chromium & Linux Headless Browser dependencies
+# Install Chromium, build tools (make, g++, python3 for better-sqlite3), and Linux Headless Browser dependencies
 RUN apt-get update && apt-get install -y \
+    build-essential \
+    python3 \
+    make \
+    g++ \
+    gcc \
     chromium \
     fonts-liberation \
     libasound2 \
