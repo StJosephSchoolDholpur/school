@@ -1175,7 +1175,7 @@ export async function fetchFeeCollections(): Promise<FeeReceiptRecord[]> {
   return getStorage<FeeReceiptRecord[]>("stj_fee_collections", []);
 }
 
-export async function saveFeeCollectionRecord(receipt: Omit<FeeReceiptRecord, "id" | "receipt_no" | "created_at"> & { id?: string; receipt_no?: string }): Promise<FeeReceiptRecord> {
+export async function saveFeeCollectionRecord(receipt: Omit<FeeReceiptRecord, "id" | "receipt_no" | "created_at" | "payment_date"> & { id?: string; receipt_no?: string; payment_date?: string }): Promise<FeeReceiptRecord> {
   const newReceipt: FeeReceiptRecord = {
     id: receipt.id || `rec_${Date.now()}`,
     receipt_no: receipt.receipt_no || `REC-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
