@@ -16,12 +16,11 @@ export const StudentAdmissionModal: React.FC<StudentAdmissionModalProps> = ({
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [submitting, setSubmitting] = useState<boolean>(false);
 
-  // Auto Generate Form Serial No
-  const [formData, setFormData] = useState<Partial<Student>>({
+  const getInitialFormData = (): Partial<Student> => ({
     form_no: `FORM-2026-${Math.floor(1000 + Math.random() * 9000)}`,
     session: "2026-2027",
     name: "",
-    dob: "2020-03-15",
+    dob: "",
     age_march31: "",
     blood_group: "O+",
     class: "Class Nursery",
@@ -29,28 +28,28 @@ export const StudentAdmissionModal: React.FC<StudentAdmissionModalProps> = ({
     religion: "Hinduism",
     category: "General",
     gender: "Male",
-    medical_condition: "None",
+    medical_condition: "",
     address: "",
-    city_state: "Dholpur, Rajasthan",
-    pincode: "328001",
+    city_state: "",
+    pincode: "",
     whatsapp_no: "",
     parent_mobile: "",
 
     // Mother
     mother_name: "",
     mother_age: "",
-    mother_qualification: "Graduate",
-    mother_profession: "Homemaker",
-    mother_city_state: "Dholpur, Rajasthan",
+    mother_qualification: "",
+    mother_profession: "",
+    mother_city_state: "",
     mother_whatsapp: "",
     mother_email: "",
 
     // Father
     father_name: "",
     father_age: "",
-    father_qualification: "Post Graduate",
-    father_profession: "Business",
-    father_city_state: "Dholpur, Rajasthan",
+    father_qualification: "",
+    father_profession: "",
+    father_city_state: "",
     father_whatsapp: "",
     father_email: "",
 
@@ -71,16 +70,30 @@ export const StudentAdmissionModal: React.FC<StudentAdmissionModalProps> = ({
     admission_no: `SJ-2026-${Math.floor(100 + Math.random() * 900)}`,
     transport_required: true,
     total_fees: 28500,
-    documents_submitted: ["Aadhaar", "DOB Certificate", "Photo"],
-    councillor_sign: "Approved by Admission Cell",
-    accountant_sign: "Accounts Verified",
+    documents_submitted: [],
+    councillor_sign: "",
+    accountant_sign: "",
     photo_url: "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=400&q=80",
   });
+
+  const [formData, setFormData] = useState<Partial<Student>>(getInitialFormData());
+
+  // Reset form when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setFormData(getInitialFormData());
+      setCurrentStep(1);
+    }
+  }, [isOpen]);
 
   // Calculate age as of March 31st of the session year
   useEffect(() => {
     if (formData.dob) {
       const birthDate = new Date(formData.dob);
+      if (isNaN(birthDate.getTime())) {
+        setFormData((prev) => ({ ...prev, age_march31: "" }));
+        return;
+      }
       const targetDate = new Date(2026, 2, 31); // March 31, 2026
       let years = targetDate.getFullYear() - birthDate.getFullYear();
       let months = targetDate.getMonth() - birthDate.getMonth();
@@ -89,6 +102,8 @@ export const StudentAdmissionModal: React.FC<StudentAdmissionModalProps> = ({
         months += 12;
       }
       setFormData((prev) => ({ ...prev, age_march31: `${years} Yrs ${months} Mos` }));
+    } else {
+      setFormData((prev) => ({ ...prev, age_march31: "" }));
     }
   }, [formData.dob]);
 
