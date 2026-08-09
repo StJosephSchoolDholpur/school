@@ -223,7 +223,7 @@ export const StudentAdmissionModal: React.FC<StudentAdmissionModalProps> = ({
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-slate-400 font-bold mb-1">Form Serial No. (Auto)</label>
+                  <label className="block text-slate-400 font-bold mb-1">Form Serial No.</label>
                   <input
                     type="text"
                     readOnly
@@ -247,7 +247,7 @@ export const StudentAdmissionModal: React.FC<StudentAdmissionModalProps> = ({
                     onChange={(e) => setFormData({ ...formData, class: e.target.value })}
                     className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-amber-400 font-bold"
                   >
-                    {["Class Nursery", "Class LKG", "Class UKG", "Class I", "Class II", "Class III", "Class IV", "Class V", "Class VI", "Class VII", "Class VIII", "Class IX", "Class X", "Class XI", "Class XII"].map((c) => (
+                    {["N/A", "Class Nursery", "Class LKG", "Class UKG", "Class I", "Class II", "Class III", "Class IV", "Class V", "Class VI", "Class VII", "Class VIII", "Class IX", "Class X", "Class XI", "Class XII"].map((c) => (
                       <option key={c} value={c}>{c}</option>
                     ))}
                   </select>
@@ -275,7 +275,7 @@ export const StudentAdmissionModal: React.FC<StudentAdmissionModalProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-400 font-bold mb-1">Age as on 31st March (Auto)</label>
+                  <label className="block text-slate-400 font-bold mb-1">Age as on 31st March</label>
                   <input
                     type="text"
                     readOnly
@@ -291,6 +291,7 @@ export const StudentAdmissionModal: React.FC<StudentAdmissionModalProps> = ({
                     onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
                     className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
                   >
+                    <option value="N/A">N/A</option>
                     <option value="Male">Male</option>
                     <option value="Female">Female</option>
                     <option value="Other">Other</option>
@@ -303,7 +304,7 @@ export const StudentAdmissionModal: React.FC<StudentAdmissionModalProps> = ({
                     onChange={(e) => setFormData({ ...formData, blood_group: e.target.value })}
                     className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono"
                   >
-                    {["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"].map((b) => (
+                    {["N/A", "A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"].map((b) => (
                       <option key={b} value={b}>{b}</option>
                     ))}
                   </select>
@@ -315,6 +316,7 @@ export const StudentAdmissionModal: React.FC<StudentAdmissionModalProps> = ({
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                     className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
                   >
+                    <option value="N/A">N/A</option>
                     <option value="General">General</option>
                     <option value="OBC">OBC</option>
                     <option value="SC">SC</option>
@@ -345,7 +347,7 @@ export const StudentAdmissionModal: React.FC<StudentAdmissionModalProps> = ({
                   <label className="block text-slate-400 font-bold mb-1">Suffering from Any Disease?</label>
                   <input
                     type="text"
-                    placeholder="e.g. None / Asthma"
+                    placeholder=""
                     value={formData.medical_condition}
                     onChange={(e) => setFormData({ ...formData, medical_condition: e.target.value })}
                     className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
@@ -356,7 +358,7 @@ export const StudentAdmissionModal: React.FC<StudentAdmissionModalProps> = ({
                   <label className="block text-slate-400 font-bold mb-1">Residential Address</label>
                   <input
                     type="text"
-                    placeholder="e.g. House No. 42, GT Road, Dholpur"
+                    placeholder="Address"
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                     className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
@@ -384,7 +386,7 @@ export const StudentAdmissionModal: React.FC<StudentAdmissionModalProps> = ({
                   <label className="block text-slate-400 font-bold mb-1">WhatsApp Mobile No.</label>
                   <input
                     type="text"
-                    placeholder="e.g. +91 9829123456"
+                    placeholder=""
                     value={formData.whatsapp_no}
                     onChange={(e) => setFormData({ ...formData, whatsapp_no: e.target.value, parent_mobile: e.target.value })}
                     className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-emerald-400 font-mono font-bold"
@@ -412,7 +414,7 @@ export const StudentAdmissionModal: React.FC<StudentAdmissionModalProps> = ({
                     <label className="block text-slate-400 font-bold mb-1">Mother Name *</label>
                     <input
                       type="text"
-                      placeholder="e.g. Mrs. Sunita Sharma"
+                      placeholder=""
                       value={formData.mother_name}
                       onChange={(e) => setFormData({ ...formData, mother_name: e.target.value })}
                       className="w-full p-2 bg-slate-900 border border-slate-800 rounded-xl text-white"
@@ -422,7 +424,7 @@ export const StudentAdmissionModal: React.FC<StudentAdmissionModalProps> = ({
                     <label className="block text-slate-400 font-bold mb-1">Age</label>
                     <input
                       type="text"
-                      placeholder="e.g. 34 Yrs"
+                      placeholder=""
                       value={formData.mother_age}
                       onChange={(e) => setFormData({ ...formData, mother_age: e.target.value })}
                       className="w-full p-2 bg-slate-900 border border-slate-800 rounded-xl text-white"
@@ -432,7 +434,7 @@ export const StudentAdmissionModal: React.FC<StudentAdmissionModalProps> = ({
                     <label className="block text-slate-400 font-bold mb-1">Academic Qualification</label>
                     <input
                       type="text"
-                      placeholder="e.g. M.A., B.Ed"
+                      placeholder=""
                       value={formData.mother_qualification}
                       onChange={(e) => setFormData({ ...formData, mother_qualification: e.target.value })}
                       className="w-full p-2 bg-slate-900 border border-slate-800 rounded-xl text-white"
@@ -442,7 +444,7 @@ export const StudentAdmissionModal: React.FC<StudentAdmissionModalProps> = ({
                     <label className="block text-slate-400 font-bold mb-1">Profession / Occupation</label>
                     <input
                       type="text"
-                      placeholder="e.g. Homemaker / Teacher"
+                      placeholder=""
                       value={formData.mother_profession}
                       onChange={(e) => setFormData({ ...formData, mother_profession: e.target.value })}
                       className="w-full p-2 bg-slate-900 border border-slate-800 rounded-xl text-white"
@@ -452,7 +454,7 @@ export const StudentAdmissionModal: React.FC<StudentAdmissionModalProps> = ({
                     <label className="block text-slate-400 font-bold mb-1">WhatsApp Mobile</label>
                     <input
                       type="text"
-                      placeholder="+91 98291..."
+                      placeholder=""
                       value={formData.mother_whatsapp}
                       onChange={(e) => setFormData({ ...formData, mother_whatsapp: e.target.value })}
                       className="w-full p-2 bg-slate-900 border border-slate-800 rounded-xl text-emerald-400 font-mono"
@@ -462,7 +464,7 @@ export const StudentAdmissionModal: React.FC<StudentAdmissionModalProps> = ({
                     <label className="block text-slate-400 font-bold mb-1">Email</label>
                     <input
                       type="email"
-                      placeholder="mother@gmail.com"
+                      placeholder=""
                       value={formData.mother_email}
                       onChange={(e) => setFormData({ ...formData, mother_email: e.target.value })}
                       className="w-full p-2 bg-slate-900 border border-slate-800 rounded-xl text-white"
@@ -481,7 +483,7 @@ export const StudentAdmissionModal: React.FC<StudentAdmissionModalProps> = ({
                     <label className="block text-slate-400 font-bold mb-1">Father Name *</label>
                     <input
                       type="text"
-                      placeholder="e.g. Mr. Rajendra Sharma"
+                      placeholder=""
                       value={formData.father_name}
                       onChange={(e) => setFormData({ ...formData, father_name: e.target.value })}
                       className="w-full p-2 bg-slate-900 border border-slate-800 rounded-xl text-white"
@@ -491,7 +493,7 @@ export const StudentAdmissionModal: React.FC<StudentAdmissionModalProps> = ({
                     <label className="block text-slate-400 font-bold mb-1">Age</label>
                     <input
                       type="text"
-                      placeholder="e.g. 38 Yrs"
+                      placeholder=""
                       value={formData.father_age}
                       onChange={(e) => setFormData({ ...formData, father_age: e.target.value })}
                       className="w-full p-2 bg-slate-900 border border-slate-800 rounded-xl text-white"
@@ -501,7 +503,7 @@ export const StudentAdmissionModal: React.FC<StudentAdmissionModalProps> = ({
                     <label className="block text-slate-400 font-bold mb-1">Academic Qualification</label>
                     <input
                       type="text"
-                      placeholder="e.g. B.Tech / M.Com"
+                      placeholder=""
                       value={formData.father_qualification}
                       onChange={(e) => setFormData({ ...formData, father_qualification: e.target.value })}
                       className="w-full p-2 bg-slate-900 border border-slate-800 rounded-xl text-white"
@@ -511,7 +513,7 @@ export const StudentAdmissionModal: React.FC<StudentAdmissionModalProps> = ({
                     <label className="block text-slate-400 font-bold mb-1">Profession / Occupation</label>
                     <input
                       type="text"
-                      placeholder="e.g. Business / Govt Service"
+                      placeholder=""
                       value={formData.father_profession}
                       onChange={(e) => setFormData({ ...formData, father_profession: e.target.value })}
                       className="w-full p-2 bg-slate-900 border border-slate-800 rounded-xl text-white"
@@ -521,7 +523,7 @@ export const StudentAdmissionModal: React.FC<StudentAdmissionModalProps> = ({
                     <label className="block text-slate-400 font-bold mb-1">WhatsApp Mobile</label>
                     <input
                       type="text"
-                      placeholder="+91 98291..."
+                      placeholder=""
                       value={formData.father_whatsapp}
                       onChange={(e) => setFormData({ ...formData, father_whatsapp: e.target.value })}
                       className="w-full p-2 bg-slate-900 border border-slate-800 rounded-xl text-emerald-400 font-mono"
@@ -531,7 +533,7 @@ export const StudentAdmissionModal: React.FC<StudentAdmissionModalProps> = ({
                     <label className="block text-slate-400 font-bold mb-1">Email</label>
                     <input
                       type="email"
-                      placeholder="father@gmail.com"
+                      placeholder=""
                       value={formData.father_email}
                       onChange={(e) => setFormData({ ...formData, father_email: e.target.value })}
                       className="w-full p-2 bg-slate-900 border border-slate-800 rounded-xl text-white"
@@ -591,6 +593,7 @@ export const StudentAdmissionModal: React.FC<StudentAdmissionModalProps> = ({
                       onChange={(e) => setFormData({ ...formData, previous_board: e.target.value })}
                       className="w-full p-2 bg-slate-900 border border-slate-800 rounded-xl text-white"
                     >
+                      <option value="N/A">N/A</option>
                       <option value="CBSE">CBSE</option>
                       <option value="RBSE / State Board">RBSE / State Board</option>
                       <option value="ICSE">ICSE</option>
@@ -649,7 +652,7 @@ export const StudentAdmissionModal: React.FC<StudentAdmissionModalProps> = ({
                       <label className="block text-slate-400 font-bold mb-1">Sibling Class</label>
                       <input
                         type="text"
-                        placeholder="e.g. Class V"
+                        placeholder=""
                         value={formData.sibling_class}
                         onChange={(e) => setFormData({ ...formData, sibling_class: e.target.value })}
                         className="w-full p-2 bg-slate-900 border border-slate-800 rounded-xl text-white"

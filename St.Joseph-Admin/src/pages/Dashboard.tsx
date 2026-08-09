@@ -133,6 +133,10 @@ export const Dashboard: React.FC = () => {
   const [activeRole, setActiveRole] = useState<"super_admin" | "principal" | "accountant" | "teacher">("super_admin");
   const [isAdmissionModalOpen, setIsAdmissionModalOpen] = useState<boolean>(false);
   const [isTeacherModalOpen, setIsTeacherModalOpen] = useState<boolean>(false);
+  const [isTcModalOpen, setIsTcModalOpen] = useState<boolean>(false);
+  const [isTransportModalOpen, setIsTransportModalOpen] = useState<boolean>(false);
+  const [isNewsModalOpen, setIsNewsModalOpen] = useState<boolean>(false);
+  const [isEventModalOpen, setIsEventModalOpen] = useState<boolean>(false);
 
   const [selectedBookClassModal, setSelectedBookClassModal] = useState<string | null>(null);
   const [selectedTcClassModal, setSelectedTcClassModal] = useState<string | null>(null);
@@ -695,160 +699,267 @@ export const Dashboard: React.FC = () => {
 
         {/* ─── TAB 2: TC MANAGER ─── */}
         {activeTab === "tc" && (
-          <div className="space-y-8">
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
-              <h3 className="font-heading font-bold text-white text-lg flex items-center gap-2">
-                <Plus className="w-5 h-5 text-amber-400" /> Issue & Upload Transfer Certificate (TC)
-              </h3>
-              <form onSubmit={handleAddTC} className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-                <div>
-                  <label className="block text-slate-400 font-bold mb-1">Student Name *</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Aarav Sharma"
-                    value={newTc.student_name}
-                    onChange={(e) => setNewTc({ ...newTc, student_name: e.target.value })}
-                    required
-                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-slate-400 font-bold mb-1">Father's Name *</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Rajendra Sharma"
-                    value={newTc.father_name}
-                    onChange={(e) => setNewTc({ ...newTc, father_name: e.target.value })}
-                    required
-                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-slate-400 font-bold mb-1">Class / Grade *</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. 10"
-                    value={newTc.class}
-                    onChange={(e) => setNewTc({ ...newTc, class: e.target.value })}
-                    required
-                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-slate-400 font-bold mb-1">SR / Roll No. *</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. 1001"
-                    value={newTc.roll_no}
-                    onChange={(e) => setNewTc({ ...newTc, roll_no: e.target.value })}
-                    required
-                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-slate-400 font-bold mb-1">TC Number *</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. TC-2026-001"
-                    value={newTc.tc_number}
-                    onChange={(e) => setNewTc({ ...newTc, tc_number: e.target.value })}
-                    required
-                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-slate-400 font-bold mb-1">Issue Date *</label>
-                  <input
-                    type="date"
-                    value={newTc.issue_date}
-                    onChange={(e) => setNewTc({ ...newTc, issue_date: e.target.value })}
-                    required
-                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
-                  />
-                </div>
-                <div className="md:col-span-3">
-                  <label className="block text-slate-400 font-bold mb-1">Attach Signed TC Document PDF</label>
-                  <input
-                    type="file"
-                    accept="application/pdf"
-                    onChange={(e) => setSelectedPdfFile(e.target.files?.[0] || null)}
-                    className="w-full p-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-300"
-                  />
-                </div>
-                <div className="md:col-span-3">
-                  <button type="submit" disabled={uploadingTc} className="w-full py-3 bg-amber-500 text-slate-950 font-bold rounded-xl text-xs">
-                    {uploadingTc ? "Uploading & Saving..." : "Save & Upload TC"}
-                  </button>
-                </div>
-              </form>
+          <div className="space-y-8 relative">
+            
+            {/* Top Action Header Banner */}
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <span className="text-[10px] font-extrabold text-amber-400 uppercase tracking-widest bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/20">
+                  Transfer Certificates (TC) Registry
+                </span>
+                <h3 className="font-heading font-extrabold text-white text-xl mt-1 flex items-center gap-2">
+                  Class-Wise Issued TC Directory ({tcs.length} Total TCs)
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Browse officially issued Transfer Certificates organized in class-wise horizontal rows or upload a new TC record.
+                </p>
+              </div>
+
+              <button
+                onClick={() => setIsTcModalOpen(true)}
+                className="px-6 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs rounded-2xl shadow-xl flex items-center gap-2 transition-all shrink-0 hover:scale-105"
+              >
+                <Plus className="w-4 h-4" />
+                <span>+ Issue & Upload TC Record</span>
+              </button>
             </div>
 
-            {/* CLASS WISE TC CARDS GRID */}
-            <div className="space-y-4">
-              <h4 className="font-heading font-bold text-white text-base">
-                Class-Wise Transfer Certificates ({Object.keys(
-                  tcs.reduce((acc: any, t) => {
-                    const cls = t.class ? `Class ${t.class}` : "General";
-                    acc[cls] = true;
-                    return acc;
-                  }, {})
-                ).length} Classes)
-              </h4>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-                {Object.entries(
-                  tcs.reduce((acc: Record<string, TCRecordData[]>, t) => {
-                    const cls = t.class ? (t.class.toLowerCase().includes("class") ? t.class : `Class ${t.class}`) : "General";
-                    if (!acc[cls]) acc[cls] = [];
-                    acc[cls].push(t);
-                    return acc;
-                  }, {})
-                )
-                  .sort(([a], [b]) => {
-                    const getWeight = (s: string) => {
-                      const l = s.toLowerCase();
-                      if (l.includes("nursery")) return -3;
-                      if (l.includes("lkg")) return -2;
-                      if (l.includes("ukg")) return -1;
-                      const m = s.match(/\d+/);
-                      return m ? parseInt(m[0], 10) : 99;
-                    };
-                    return getWeight(a) - getWeight(b);
-                  })
-                  .map(([clsName, tcList]) => (
-                    <div
-                      key={clsName}
-                      onClick={() => setSelectedTcClassModal(clsName)}
-                      className="bg-slate-900 border border-slate-800 hover:border-amber-500/60 rounded-3xl p-5 shadow-xl transition-all duration-300 cursor-pointer group flex flex-col justify-between"
-                    >
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold">
-                            <FileCheck2 className="w-5 h-5" />
-                          </div>
-                          <span className="text-[10px] font-extrabold text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20">
-                            {tcList.length} {tcList.length === 1 ? "TC" : "TCs"} Issued
-                          </span>
-                        </div>
-
-                        <div>
-                          <h4 className="font-heading font-extrabold text-white text-lg group-hover:text-amber-400 transition-colors">
-                            {clsName}
-                          </h4>
-                          <p className="text-xs text-slate-400 mt-0.5">
-                            Issued Transfer Certificates Directory
-                          </p>
-                        </div>
+            {/* CLASS WISE HORIZONTAL ROWS VIEW FOR TCS */}
+            <div className="space-y-8">
+              {Object.entries(
+                tcs.reduce((acc: Record<string, TCRecordData[]>, t) => {
+                  const rawCls = t.class || "General";
+                  const cls = rawCls.toLowerCase().includes("class") ? rawCls : `Class ${rawCls}`;
+                  if (!acc[cls]) acc[cls] = [];
+                  acc[cls].push(t);
+                  return acc;
+                }, {})
+              )
+                .sort(([a], [b]) => {
+                  const getWeight = (s: string) => {
+                    const l = s.toLowerCase();
+                    if (l.includes("nursery")) return -3;
+                    if (l.includes("lkg")) return -2;
+                    if (l.includes("ukg")) return -1;
+                    const m = s.match(/\d+/);
+                    return m ? parseInt(m[0], 10) : 99;
+                  };
+                  return getWeight(a) - getWeight(b);
+                })
+                .map(([clsName, tcList]) => (
+                  <div key={clsName} className="space-y-4">
+                    {/* Class Row Header */}
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                      <div className="flex items-center gap-3">
+                        <span className="w-3 h-3 rounded-full bg-amber-400"></span>
+                        <h4 className="font-heading font-extrabold text-white text-base tracking-wide">
+                          {clsName}
+                        </h4>
+                        <span className="text-xs font-bold text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20">
+                          {tcList.length} {tcList.length === 1 ? "TC" : "TCs"} Issued
+                        </span>
                       </div>
+                      <button
+                        onClick={() => setSelectedTcClassModal(clsName)}
+                        className="text-xs text-slate-400 hover:text-amber-400 font-bold transition-colors flex items-center gap-1"
+                      >
+                        View Class TC Table →
+                      </button>
+                    </div>
 
-                      <div className="mt-5 pt-3 border-t border-slate-800 flex items-center justify-between text-xs font-bold text-amber-400 group-hover:text-amber-300">
-                        <span>Click to View TCs</span>
-                        <span className="group-hover:translate-x-1 transition-transform">→</span>
+                    {/* Horizontal Scrolling Row */}
+                    <div className="flex gap-4 overflow-x-auto pb-4 pt-1 scrollbar-thin scrollbar-thumb-slate-800">
+                      {tcList.map((t) => (
+                        <div
+                          key={t.id}
+                          className="min-w-[280px] max-w-[280px] bg-slate-900 border border-slate-800 hover:border-amber-500/50 rounded-3xl p-5 shadow-xl space-y-3 shrink-0 flex flex-col justify-between transition-all relative group"
+                        >
+                          <button
+                            onClick={() => handleDeleteTC(t.id)}
+                            className="absolute top-4 right-4 text-slate-600 hover:text-red-400 transition-colors"
+                            title="Delete TC Record"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+
+                          <div className="space-y-3">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold">
+                                <FileCheck2 className="w-5 h-5" />
+                              </div>
+                              <div>
+                                <h5 className="font-bold text-white text-sm group-hover:text-amber-400 transition-colors">
+                                  {t.student_name}
+                                </h5>
+                                <span className="text-[10px] font-bold text-amber-400 font-mono">
+                                  Roll / SR: {t.roll_no}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="space-y-1 text-xs text-slate-400">
+                              <p>👤 Father: <span className="text-slate-300 font-medium">{t.father_name || "N/A"}</span></p>
+                              <p>📄 TC No: <span className="text-emerald-400 font-mono font-bold">{t.tc_number}</span></p>
+                              <p>🗓️ Issued: <span className="text-slate-300 font-mono">{t.issue_date || "N/A"}</span></p>
+                            </div>
+                          </div>
+
+                          <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
+                            {((t as any).tc_url || (t as any).pdf_url) ? (
+                              <a
+                                href={(t as any).tc_url || (t as any).pdf_url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="px-3 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border border-amber-500/30"
+                              >
+                                <Eye className="w-3.5 h-3.5" /> View PDF
+                              </a>
+                            ) : (
+                              <span className="text-slate-500 font-medium">No File</span>
+                            )}
+                            <span className="text-emerald-400 font-bold">Issued ✓</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+            </div>
+
+            {/* FLOATING ACTION BUTTON (FAB) FOR TC REGISTRATION */}
+            <button
+              onClick={() => setIsTcModalOpen(true)}
+              className="fixed bottom-8 right-8 z-40 px-6 py-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs rounded-full shadow-2xl flex items-center gap-2.5 border-2 border-amber-300 transition-all hover:scale-105 animate-pulse"
+              title="Issue & Upload New Transfer Certificate"
+            >
+              <Plus className="w-5 h-5" />
+              <span>+ Issue & Upload TC</span>
+            </button>
+
+            {/* TC UPLOAD MODAL DIALOG */}
+            {isTcModalOpen && (
+              <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+                <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-2xl w-full shadow-2xl p-6 space-y-5">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold">
+                        <FileCheck2 className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-extrabold uppercase tracking-widest text-amber-400">
+                          Transfer Certificate Management
+                        </span>
+                        <h3 className="text-lg font-heading font-extrabold text-white">
+                          Issue & Upload Transfer Certificate (TC)
+                        </h3>
                       </div>
                     </div>
-                  ))}
+                    <button
+                      onClick={() => setIsTcModalOpen(false)}
+                      className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-xl text-xs font-bold"
+                    >
+                      ✕ Close
+                    </button>
+                  </div>
+
+                  <form onSubmit={async (e) => {
+                    await handleAddTC(e);
+                    setIsTcModalOpen(false);
+                  }} className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                    <div>
+                      <label className="block text-slate-400 font-bold mb-1">Student Name *</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Aarav Sharma"
+                        value={newTc.student_name}
+                        onChange={(e) => setNewTc({ ...newTc, student_name: e.target.value })}
+                        required
+                        className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-400 font-bold mb-1">Father's Name *</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Rajendra Sharma"
+                        value={newTc.father_name}
+                        onChange={(e) => setNewTc({ ...newTc, father_name: e.target.value })}
+                        required
+                        className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-400 font-bold mb-1">Class / Grade *</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Class X"
+                        value={newTc.class}
+                        onChange={(e) => setNewTc({ ...newTc, class: e.target.value })}
+                        required
+                        className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-400 font-bold mb-1">SR / Roll No. *</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 1001"
+                        value={newTc.roll_no}
+                        onChange={(e) => setNewTc({ ...newTc, roll_no: e.target.value })}
+                        required
+                        className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-400 font-bold mb-1">TC Number *</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. TC-2026-001"
+                        value={newTc.tc_number}
+                        onChange={(e) => setNewTc({ ...newTc, tc_number: e.target.value })}
+                        required
+                        className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-amber-400 font-mono font-bold"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-400 font-bold mb-1">Issue Date *</label>
+                      <input
+                        type="date"
+                        value={newTc.issue_date}
+                        onChange={(e) => setNewTc({ ...newTc, issue_date: e.target.value })}
+                        required
+                        className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-slate-400 font-bold mb-1">Attach Signed TC Document PDF</label>
+                      <input
+                        type="file"
+                        accept="application/pdf"
+                        onChange={(e) => setSelectedPdfFile(e.target.files?.[0] || null)}
+                        className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-300"
+                      />
+                    </div>
+                    <div className="md:col-span-2 pt-2 border-t border-slate-800 flex justify-end gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setIsTcModalOpen(false)}
+                        className="px-5 py-2.5 bg-slate-800 text-white font-bold rounded-xl text-xs"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={uploadingTc}
+                        className="px-6 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold rounded-xl text-xs shadow-xl"
+                      >
+                        {uploadingTc ? "Uploading & Saving..." : "Save & Upload TC"}
+                      </button>
+                    </div>
+                  </form>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* CLASS TC MODAL DIALOG */}
             {selectedTcClassModal && (
@@ -1422,85 +1533,188 @@ export const Dashboard: React.FC = () => {
 
         {/* ─── TAB 6: TRANSPORTATION ─── */}
         {activeTab === "transport" && (
-          <div className="space-y-8">
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
-              <h3 className="font-heading font-bold text-white text-lg flex items-center gap-2">
-                <Plus className="w-5 h-5 text-amber-400" /> Add Transportation Bus Route
-              </h3>
-              <form onSubmit={handleAddRoute} className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-                <div>
-                  <label className="block text-slate-400 font-bold mb-1">Route Area *</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Dholpur City Route"
-                    value={newRoute.area}
-                    onChange={(e) => setNewRoute({ ...newRoute, area: e.target.value })}
-                    required
-                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-slate-400 font-bold mb-1">Bus Number *</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. RJ-11-PA-101"
-                    value={newRoute.busNo}
-                    onChange={(e) => setNewRoute({ ...newRoute, busNo: e.target.value })}
-                    required
-                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-slate-400 font-bold mb-1">Pickup Time *</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. 07:00 AM"
-                    value={newRoute.pickupTime}
-                    onChange={(e) => setNewRoute({ ...newRoute, pickupTime: e.target.value })}
-                    required
-                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-slate-400 font-bold mb-1">Key Stops List</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Gulab Bagh, Ondela Road, Station"
-                    value={newRoute.stops}
-                    onChange={(e) => setNewRoute({ ...newRoute, stops: e.target.value })}
-                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-slate-400 font-bold mb-1">Driver Name & Phone</label>
-                  <input
-                    type="text"
-                    placeholder="Ram Singh (+91 98291-11223)"
-                    value={newRoute.driverName}
-                    onChange={(e) => setNewRoute({ ...newRoute, driverName: e.target.value })}
-                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
-                  />
-                </div>
-                <div className="md:col-span-3">
-                  <button type="submit" className="w-full py-3 bg-amber-500 text-slate-950 font-bold rounded-xl text-xs">
-                    Save Bus Route
-                  </button>
-                </div>
-              </form>
+          <div className="space-y-8 relative">
+            
+            {/* Top Action Header Banner */}
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <span className="text-[10px] font-extrabold text-amber-400 uppercase tracking-widest bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/20">
+                  School Bus & Fleet Management
+                </span>
+                <h3 className="font-heading font-extrabold text-white text-xl mt-1 flex items-center gap-2">
+                  Transportation Bus Routes ({routes.length} Active Routes)
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Manage school bus routes, driver details, key stops, and pickup timetables.
+                </p>
+              </div>
+
+              <button
+                onClick={() => setIsTransportModalOpen(true)}
+                className="px-6 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs rounded-2xl shadow-xl flex items-center gap-2 transition-all shrink-0 hover:scale-105"
+              >
+                <Plus className="w-4 h-4" />
+                <span>+ Add Bus Route</span>
+              </button>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-4">
+            {/* ROUTE CARDS GRID */}
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
               {routes.map((r) => (
-                <div key={r.id} className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-2 relative">
-                  <button onClick={() => handleDeleteRoute(r.id)} className="absolute top-4 right-4 text-red-400 hover:text-red-300">
+                <div key={r.id} className="bg-slate-900 border border-slate-800 hover:border-amber-500/50 rounded-3xl p-5 shadow-xl space-y-3 relative group flex flex-col justify-between transition-all">
+                  <button
+                    onClick={() => handleDeleteRoute(r.id)}
+                    className="absolute top-4 right-4 text-slate-600 hover:text-red-400 transition-colors"
+                    title="Delete Route"
+                  >
                     <Trash2 className="w-4 h-4" />
                   </button>
-                  <h4 className="font-bold text-white text-sm">{r.area}</h4>
-                  <p className="text-xs text-amber-400">Bus: {r.busNo} | Pickup: {r.pickupTime}</p>
-                  <p className="text-xs text-slate-400">Stops: {r.stops}</p>
+
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold shrink-0">
+                        <Bus className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h4 className="font-heading font-extrabold text-white text-base group-hover:text-amber-400 transition-colors">
+                          {r.area}
+                        </h4>
+                        <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20 font-mono">
+                          Bus No: {r.busNo}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1 text-xs text-slate-400 pt-1 border-t border-slate-800/80">
+                      <p>⏰ Pickup Time: <span className="text-slate-300 font-mono font-bold">{r.pickupTime}</span></p>
+                      <p>🚏 Key Stops: <span className="text-slate-300 font-medium">{r.stops}</span></p>
+                      {r.driverName && <p>👤 Driver: <span className="text-emerald-400 font-mono font-bold">{r.driverName}</span></p>}
+                    </div>
+                  </div>
+
+                  <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
+                    <span className="text-amber-400 font-bold bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20">
+                      Route Active
+                    </span>
+                    <span className="text-emerald-400 font-bold">Operational ✓</span>
+                  </div>
                 </div>
               ))}
             </div>
+
+            {/* FLOATING ACTION BUTTON (FAB) FOR BUS ROUTE */}
+            <button
+              onClick={() => setIsTransportModalOpen(true)}
+              className="fixed bottom-8 right-8 z-40 px-6 py-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs rounded-full shadow-2xl flex items-center gap-2.5 border-2 border-amber-300 transition-all hover:scale-105 animate-pulse"
+              title="Add Transportation Bus Route"
+            >
+              <Plus className="w-5 h-5" />
+              <span>+ Add Bus Route</span>
+            </button>
+
+            {/* TRANSPORT ROUTE MODAL DIALOG */}
+            {isTransportModalOpen && (
+              <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+                <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-2xl w-full shadow-2xl p-6 space-y-5">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold">
+                        <Bus className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-extrabold uppercase tracking-widest text-amber-400">
+                          Fleet Management
+                        </span>
+                        <h3 className="text-lg font-heading font-extrabold text-white">
+                          Add Transportation Bus Route
+                        </h3>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setIsTransportModalOpen(false)}
+                      className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-xl text-xs font-bold"
+                    >
+                      ✕ Close
+                    </button>
+                  </div>
+
+                  <form onSubmit={async (e) => {
+                    await handleAddRoute(e);
+                    setIsTransportModalOpen(false);
+                  }} className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                    <div>
+                      <label className="block text-slate-400 font-bold mb-1">Route Area *</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Dholpur City Route"
+                        value={newRoute.area}
+                        onChange={(e) => setNewRoute({ ...newRoute, area: e.target.value })}
+                        required
+                        className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-400 font-bold mb-1">Bus Number *</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. RJ-11-PA-101"
+                        value={newRoute.busNo}
+                        onChange={(e) => setNewRoute({ ...newRoute, busNo: e.target.value })}
+                        required
+                        className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-amber-400 font-mono font-bold"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-400 font-bold mb-1">Pickup Time *</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 07:00 AM"
+                        value={newRoute.pickupTime}
+                        onChange={(e) => setNewRoute({ ...newRoute, pickupTime: e.target.value })}
+                        required
+                        className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-slate-400 font-bold mb-1">Key Stops List</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Gulab Bagh, Ondela Road, Station"
+                        value={newRoute.stops}
+                        onChange={(e) => setNewRoute({ ...newRoute, stops: e.target.value })}
+                        className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-400 font-bold mb-1">Driver Name & Phone</label>
+                      <input
+                        type="text"
+                        placeholder="Ram Singh (+91 98291-11223)"
+                        value={newRoute.driverName}
+                        onChange={(e) => setNewRoute({ ...newRoute, driverName: e.target.value })}
+                        className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
+                      />
+                    </div>
+                    <div className="md:col-span-3 pt-2 border-t border-slate-800 flex justify-end gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setIsTransportModalOpen(false)}
+                        className="px-5 py-2.5 bg-slate-800 text-white font-bold rounded-xl text-xs"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-6 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold rounded-xl text-xs shadow-xl"
+                      >
+                        Save Bus Route
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
+
           </div>
         )}
 
