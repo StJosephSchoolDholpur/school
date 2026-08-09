@@ -12,15 +12,65 @@ CREATE TABLE IF NOT EXISTS public.students (
 );
 
 -- 2. SAFELY ADD MISSING COLUMNS IF STUDENTS TABLE ALREADY EXISTED
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS form_no TEXT;
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS session TEXT;
 ALTER TABLE public.students ADD COLUMN IF NOT EXISTS admission_no TEXT;
 ALTER TABLE public.students ADD COLUMN IF NOT EXISTS student_name TEXT;
 ALTER TABLE public.students ADD COLUMN IF NOT EXISTS section TEXT DEFAULT 'A';
 ALTER TABLE public.students ADD COLUMN IF NOT EXISTS roll_no TEXT;
 ALTER TABLE public.students ADD COLUMN IF NOT EXISTS dob TEXT;
 ALTER TABLE public.students ADD COLUMN IF NOT EXISTS date_of_birth DATE;
-ALTER TABLE public.students ADD COLUMN IF NOT EXISTS father_name TEXT;
-ALTER TABLE public.students ADD COLUMN IF NOT EXISTS mother_name TEXT;
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS age_march31 TEXT;
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS blood_group TEXT;
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS nationality TEXT;
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS religion TEXT;
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS category TEXT;
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS gender TEXT;
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS medical_condition TEXT;
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS address TEXT;
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS city_state TEXT;
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS pincode TEXT;
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS whatsapp_no TEXT;
 ALTER TABLE public.students ADD COLUMN IF NOT EXISTS parent_mobile TEXT;
+
+-- Mother details
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS mother_name TEXT;
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS mother_age TEXT;
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS mother_qualification TEXT;
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS mother_profession TEXT;
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS mother_city_state TEXT;
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS mother_whatsapp TEXT;
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS mother_email TEXT;
+
+-- Father details
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS father_name TEXT;
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS father_age TEXT;
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS father_qualification TEXT;
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS father_profession TEXT;
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS father_city_state TEXT;
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS father_whatsapp TEXT;
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS father_email TEXT;
+
+-- Previous School & Sibling details
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS previous_school_name TEXT;
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS previous_class TEXT;
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS previous_medium TEXT;
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS previous_board TEXT;
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS previous_school_address TEXT;
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS previous_marks TEXT;
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS has_sibling BOOLEAN DEFAULT false;
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS sibling_name TEXT;
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS sibling_admission_no TEXT;
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS sibling_class TEXT;
+
+-- Office Use & Fees details
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS admission_date DATE;
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS transport_required BOOLEAN DEFAULT true;
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS total_fees NUMERIC;
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS documents_submitted TEXT[];
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS councillor_sign TEXT;
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS accountant_sign TEXT;
+
 ALTER TABLE public.students ADD COLUMN IF NOT EXISTS active_status BOOLEAN DEFAULT true;
 ALTER TABLE public.students ADD COLUMN IF NOT EXISTS photo_url TEXT;
 ALTER TABLE public.students ADD COLUMN IF NOT EXISTS wishes TEXT DEFAULT 'Happy Birthday!';
