@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Sidebar, AdminTab } from "../components/Sidebar";
 import { WhatsAppBirthdayManager } from "../components/WhatsAppBirthdayManager";
+import { StudentAdmissionModal } from "../components/StudentAdmissionModal";
 import {
   fetchTCs,
   uploadAndSaveTC,
@@ -129,6 +130,7 @@ export const Dashboard: React.FC = () => {
   });
   const [selectedReceiptForPrint, setSelectedReceiptForPrint] = useState<FeeReceiptRecord | null>(null);
   const [activeRole, setActiveRole] = useState<"super_admin" | "principal" | "accountant" | "teacher">("super_admin");
+  const [isAdmissionModalOpen, setIsAdmissionModalOpen] = useState<boolean>(false);
 
   const [selectedBookClassModal, setSelectedBookClassModal] = useState<string | null>(null);
   const [selectedTcClassModal, setSelectedTcClassModal] = useState<string | null>(null);
@@ -319,6 +321,11 @@ export const Dashboard: React.FC = () => {
     } catch (e) {
       alert("Error collecting fee payment");
     }
+  };
+
+  const handleSaveAdmissionModal = async (studentData: Partial<Student>) => {
+    const saved = await saveStudentRecord(studentData as any);
+    setStudents([saved, ...students]);
   };
 
   const handleAddTC = async (e: React.FormEvent) => {
@@ -1019,168 +1026,146 @@ export const Dashboard: React.FC = () => {
 
         {/* ─── TAB 4: STUDENTS & BIRTHDAYS ─── */}
         {activeTab === "students" && (
-          <div className="space-y-8">
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
-              <h3 className="font-heading font-bold text-white text-lg flex items-center gap-2">
-                <Plus className="w-5 h-5 text-amber-400" /> Add Student & Set Birthday
-              </h3>
-              <form onSubmit={handleAddStudent} className="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs">
-                <div>
-                  <label className="block text-slate-400 font-bold mb-1">Student Full Name *</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Aarav Sharma"
-                    value={newStudent.name}
-                    onChange={(e) => setNewStudent({ ...newStudent, name: e.target.value })}
-                    required
-                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-slate-400 font-bold mb-1">Class *</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Class I, Class X"
-                    value={newStudent.class}
-                    onChange={(e) => setNewStudent({ ...newStudent, class: e.target.value })}
-                    required
-                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-slate-400 font-bold mb-1">Section / Roll No</label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="Sec A"
-                      value={newStudent.section}
-                      onChange={(e) => setNewStudent({ ...newStudent, section: e.target.value })}
-                      className="w-1/2 p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Roll 101"
-                      value={newStudent.roll_no}
-                      onChange={(e) => setNewStudent({ ...newStudent, roll_no: e.target.value })}
-                      className="w-1/2 p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-slate-400 font-bold mb-1">Date of Birth (DOB) *</label>
-                  <input
-                    type="date"
-                    value={newStudent.dob}
-                    onChange={(e) => setNewStudent({ ...newStudent, dob: e.target.value })}
-                    required
-                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-slate-400 font-bold mb-1">Father's Name</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Mr. Rajendra Sharma"
-                    value={newStudent.father_name}
-                    onChange={(e) => setNewStudent({ ...newStudent, father_name: e.target.value })}
-                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-slate-400 font-bold mb-1">Parent Mobile (WhatsApp)</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. +91 9829123456"
-                    value={newStudent.parent_mobile}
-                    onChange={(e) => setNewStudent({ ...newStudent, parent_mobile: e.target.value })}
-                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-slate-400 font-bold mb-1">Admission / SR No.</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. SJ-2026-101"
-                    value={newStudent.admission_no}
-                    onChange={(e) => setNewStudent({ ...newStudent, admission_no: e.target.value })}
-                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
-                  />
-                </div>
-                <div className="flex items-end">
-                  <button type="submit" className="w-full py-3 bg-amber-500 text-slate-950 font-bold rounded-xl text-xs shadow-md">
-                    Save Student Record
-                  </button>
-                </div>
-              </form>
-            </div>
-
-            {/* CLASS WISE STUDENT CARDS GRID */}
-            <div className="space-y-4">
-              <h4 className="font-heading font-bold text-white text-base">
-                Class-Wise Student Directory ({Object.keys(
-                  students.reduce((acc: any, s) => {
-                    const cls = s.class ? (s.class.toLowerCase().includes("class") ? s.class : `Class ${s.class}`) : "General";
-                    acc[cls] = true;
-                    return acc;
-                  }, {})
-                ).length} Classes)
-              </h4>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-                {Object.entries(
-                  students.reduce((acc: Record<string, Student[]>, s) => {
-                    const rawCls = s.class || "General";
-                    const cls = rawCls.toLowerCase().includes("class") ? rawCls : `Class ${rawCls}`;
-                    if (!acc[cls]) acc[cls] = [];
-                    acc[cls].push(s);
-                    return acc;
-                  }, {})
-                )
-                  .sort(([a], [b]) => {
-                    const getWeight = (str: string) => {
-                      const l = str.toLowerCase();
-                      if (l.includes("nursery")) return -3;
-                      if (l.includes("lkg")) return -2;
-                      if (l.includes("ukg")) return -1;
-                      const m = str.match(/\d+/);
-                      return m ? parseInt(m[0], 10) : 99;
-                    };
-                    return getWeight(a) - getWeight(b);
-                  })
-                  .map(([clsName, studentList]) => (
-                    <div
-                      key={clsName}
-                      onClick={() => setSelectedStudentClassModal(clsName)}
-                      className="bg-slate-900 border border-slate-800 hover:border-amber-500/60 rounded-3xl p-5 shadow-xl transition-all duration-300 cursor-pointer group flex flex-col justify-between"
-                    >
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold">
-                            <Users className="w-5 h-5" />
-                          </div>
-                          <span className="text-[10px] font-extrabold text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20">
-                            {studentList.length} {studentList.length === 1 ? "Student" : "Students"}
-                          </span>
-                        </div>
-
-                        <div>
-                          <h4 className="font-heading font-extrabold text-white text-lg group-hover:text-amber-400 transition-colors">
-                            {clsName}
-                          </h4>
-                          <p className="text-xs text-slate-400 mt-0.5">
-                            Active Student Roster
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="mt-5 pt-3 border-t border-slate-800 flex items-center justify-between text-xs font-bold text-amber-400 group-hover:text-amber-300">
-                        <span>Click to View Students</span>
-                        <span className="group-hover:translate-x-1 transition-transform">→</span>
-                      </div>
-                    </div>
-                  ))}
+          <div className="space-y-8 relative">
+            
+            {/* Top Action Header Banner */}
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <span className="text-[10px] font-extrabold text-amber-400 uppercase tracking-widest bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/20">
+                  Student Information System (SIS)
+                </span>
+                <h3 className="font-heading font-extrabold text-white text-xl mt-1 flex items-center gap-2">
+                  Class-Wise Student Directory
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Browse enrolled students organized in class-wise horizontal rows or register new admissions using the multi-page form.
+                </p>
               </div>
+
+              <button
+                onClick={() => setIsAdmissionModalOpen(true)}
+                className="px-6 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs rounded-2xl shadow-xl flex items-center gap-2 transition-all shrink-0 hover:scale-105"
+              >
+                <Plus className="w-4 h-4" />
+                <span>+ New Student Admission Form (5 Pages)</span>
+              </button>
             </div>
+
+            {/* CLASS WISE HORIZONTAL ROWS VIEW */}
+            <div className="space-y-8">
+              {Object.entries(
+                students.reduce((acc: Record<string, Student[]>, s) => {
+                  const rawCls = s.class || "General";
+                  const cls = rawCls.toLowerCase().includes("class") ? rawCls : `Class ${rawCls}`;
+                  if (!acc[cls]) acc[cls] = [];
+                  acc[cls].push(s);
+                  return acc;
+                }, {})
+              )
+                .sort(([a], [b]) => {
+                  const getWeight = (str: string) => {
+                    const l = str.toLowerCase();
+                    if (l.includes("nursery")) return -3;
+                    if (l.includes("lkg")) return -2;
+                    if (l.includes("ukg")) return -1;
+                    const m = str.match(/\d+/);
+                    return m ? parseInt(m[0], 10) : 99;
+                  };
+                  return getWeight(a) - getWeight(b);
+                })
+                .map(([clsName, studentList]) => (
+                  <div key={clsName} className="space-y-4">
+                    {/* Class Row Header */}
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                      <div className="flex items-center gap-3">
+                        <span className="w-3 h-3 rounded-full bg-amber-400"></span>
+                        <h4 className="font-heading font-extrabold text-white text-base tracking-wide">
+                          {clsName}
+                        </h4>
+                        <span className="text-xs font-bold text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20">
+                          {studentList.length} {studentList.length === 1 ? "Student" : "Students"}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => setSelectedStudentClassModal(clsName)}
+                        className="text-xs text-slate-400 hover:text-amber-400 font-bold transition-colors flex items-center gap-1"
+                      >
+                        View Full Roster Table →
+                      </button>
+                    </div>
+
+                    {/* Horizontal Scrolling Row */}
+                    <div className="flex gap-4 overflow-x-auto pb-4 pt-1 scrollbar-thin scrollbar-thumb-slate-800">
+                      {studentList.map((s) => (
+                        <div
+                          key={s.id}
+                          className="min-w-[270px] max-w-[270px] bg-slate-900 border border-slate-800 hover:border-amber-500/50 rounded-3xl p-5 shadow-xl space-y-3 shrink-0 flex flex-col justify-between transition-all relative group"
+                        >
+                          <button
+                            onClick={() => handleDeleteStudent(s.id)}
+                            className="absolute top-4 right-4 text-slate-600 hover:text-red-400 transition-colors"
+                            title="Delete Student"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+
+                          <div className="space-y-3">
+                            <div className="flex items-center gap-3">
+                              <img
+                                src={s.photo_url || "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=400&q=80"}
+                                alt={s.name}
+                                className="w-12 h-12 rounded-2xl object-cover border border-amber-500/30"
+                              />
+                              <div>
+                                <h5 className="font-bold text-white text-sm group-hover:text-amber-400 transition-colors">
+                                  {s.name}
+                                </h5>
+                                {(s.admission_no || s.roll_no) && (
+                                  <span className="text-[10px] font-bold text-amber-400 font-mono">
+                                    SR: {s.admission_no || s.roll_no}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="space-y-1 text-xs text-slate-400">
+                              <p>📅 DOB: <span className="text-slate-300 font-mono">{s.dob || "N/A"}</span></p>
+                              {s.father_name && <p>👤 Father: <span className="text-slate-300 font-medium">{s.father_name}</span></p>}
+                              {(s.parent_mobile || s.whatsapp_no) && (
+                                <p className="text-emerald-400 font-mono text-[11px]">📲 {s.parent_mobile || s.whatsapp_no}</p>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
+                            <span className="text-slate-500">Sec: {s.section || "A"}</span>
+                            <span className="text-emerald-400 font-bold">Active ✓</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+            </div>
+
+            {/* FLOATING ACTION BUTTON (FAB) FOR NEW ADMISSION FORM */}
+            <button
+              onClick={() => setIsAdmissionModalOpen(true)}
+              className="fixed bottom-8 right-8 z-40 px-6 py-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs rounded-full shadow-2xl flex items-center gap-2.5 border-2 border-amber-300 transition-all hover:scale-105 animate-pulse"
+              title="Open 5-Page Multi-Step Admission Registration Form"
+            >
+              <Plus className="w-5 h-5" />
+              <span>+ Add Admission Form</span>
+            </button>
+
+            {/* 5-PAGE MULTI-STEP ADMISSION MODAL */}
+            <StudentAdmissionModal
+              isOpen={isAdmissionModalOpen}
+              onClose={() => setIsAdmissionModalOpen(false)}
+              onSaveStudent={handleSaveAdmissionModal}
+            />
+
+
 
             {/* CLASS STUDENT MODAL DIALOG */}
             {selectedStudentClassModal && (

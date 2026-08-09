@@ -30,6 +30,8 @@ export interface Teacher {
 
 export interface Student {
   id: string;
+  form_no?: string;
+  session?: string;
   name: string;
   student_name?: string;
   admission_no?: string;
@@ -37,10 +39,57 @@ export interface Student {
   section?: string;
   roll_no?: string;
   dob: string; // YYYY-MM-DD
-  father_name?: string;
-  mother_name?: string;
-  parent_mobile?: string;
+  age_march31?: string;
+  blood_group?: string;
+  nationality?: string;
+  religion?: string;
+  category?: string;
+  gender?: string;
+  medical_condition?: string;
   address?: string;
+  city_state?: string;
+  pincode?: string;
+  whatsapp_no?: string;
+  parent_mobile?: string;
+
+  // Mother details
+  mother_name?: string;
+  mother_age?: string;
+  mother_qualification?: string;
+  mother_profession?: string;
+  mother_city_state?: string;
+  mother_whatsapp?: string;
+  mother_email?: string;
+
+  // Father details
+  father_name?: string;
+  father_age?: string;
+  father_qualification?: string;
+  father_profession?: string;
+  father_city_state?: string;
+  father_whatsapp?: string;
+  father_email?: string;
+
+  // Previous school & Sibling
+  previous_school_name?: string;
+  previous_class?: string;
+  previous_medium?: string;
+  previous_board?: string;
+  previous_school_address?: string;
+  previous_marks?: string;
+  has_sibling?: boolean;
+  sibling_name?: string;
+  sibling_admission_no?: string;
+  sibling_class?: string;
+
+  // Office Use
+  admission_date?: string;
+  transport_required?: boolean;
+  total_fees?: number;
+  documents_submitted?: string[];
+  councillor_sign?: string;
+  accountant_sign?: string;
+
   photo_url?: string;
   active_status?: boolean;
   wishes?: string;
@@ -564,44 +613,34 @@ export async function fetchStudents(): Promise<Student[]> {
 
 export async function saveStudentRecord(s: Omit<Student, "id"> & { id?: string }): Promise<Student> {
   const record: Student = {
+    ...s,
     id: s.id || `s_${Date.now()}`,
-    name: s.name,
+    name: s.name || s.student_name || "Student",
     student_name: s.student_name || s.name,
     admission_no: s.admission_no || s.roll_no || `SJ-${Date.now().toString().slice(-4)}`,
-    class: s.class,
+    form_no: s.form_no || `FORM-2026-${Math.floor(1000 + Math.random() * 9000)}`,
+    session: s.session || "2026-2027",
+    class: s.class || "Class Nursery",
     section: s.section || "A",
     roll_no: s.roll_no || "",
-    dob: s.dob,
+    dob: s.dob || "2020-01-01",
     father_name: s.father_name || "",
     mother_name: s.mother_name || "",
-    parent_mobile: s.parent_mobile || "",
+    parent_mobile: s.parent_mobile || s.whatsapp_no || "",
     address: s.address || "",
     photo_url: s.photo_url || "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=400&q=80",
     active_status: s.active_status ?? true,
     wishes: s.wishes || "Happy Birthday!",
-    created_at: new Date().toISOString(),
+    created_at: s.created_at || new Date().toISOString(),
   };
 
   if (SUPABASE_ANON_KEY) {
     try {
-      const dbPayload: any = {
-        name: record.name,
-        student_name: record.student_name,
-        admission_no: record.admission_no,
-        class: record.class,
-        section: record.section,
-        roll_no: record.roll_no,
-        dob: record.dob,
-        father_name: record.father_name,
-        mother_name: record.mother_name,
-        parent_mobile: record.parent_mobile,
-        address: record.address,
-        photo_url: record.photo_url,
-        active_status: record.active_status,
-        wishes: record.wishes,
-      };
+      const dbPayload: any = cleanPayload(record);
       if (s.id && !s.id.startsWith("s_")) {
         dbPayload.id = s.id;
+      } else {
+        delete dbPayload.id;
       }
 
       const { data, error } = await supabase.from("students").upsert([dbPayload]).select();
