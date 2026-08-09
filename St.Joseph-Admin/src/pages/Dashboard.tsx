@@ -108,9 +108,11 @@ export const Dashboard: React.FC = () => {
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // New Module States
-  const [attendanceDate, setAttendanceDate] = useState<string>(new Date().toISOString().split("T")[0]);
-  const [attendanceClass, setAttendanceClass] = useState<string>("Class I");
+  // New Module States - Locked Date & Null Initial Class
+  const attendanceTodayDate = useMemo(() => new Date().toISOString().split("T")[0], []);
+  const [attendanceDate] = useState<string>(attendanceTodayDate);
+  const [selectedAttendanceClass, setSelectedAttendanceClass] = useState<string | null>(null);
+  const [attendanceMode, setAttendanceMode] = useState<"mark" | "view">("mark");
   const [attendanceMap, setAttendanceMap] = useState<Record<string, "Present" | "Absent" | "Late" | "Leave">>({});
   const [attendanceSaving, setAttendanceSaving] = useState(false);
 
@@ -257,6 +259,7 @@ export const Dashboard: React.FC = () => {
   // HANDLERS
   // Handlers for New Modules
   const handleSaveAttendance = async () => {
+    if (!selectedAttendanceClass) return;
     setAttendanceSaving(true);
     try {
       const recordsToSave: AttendanceRecord[] = Object.entries(attendanceMap).map(([sId, status]) => {
@@ -265,13 +268,14 @@ export const Dashboard: React.FC = () => {
           id: `att_${sId}_${attendanceDate}`,
           student_id: sId,
           student_name: student?.name || "Student",
-          class: attendanceClass,
+          class: selectedAttendanceClass,
           date: attendanceDate,
           status
         };
       });
       await saveAttendanceRecords(recordsToSave);
-      alert("✅ Attendance saved successfully for " + attendanceClass + " (" + attendanceDate + ")!");
+      alert("🎉 Attendance for " + selectedAttendanceClass + " saved & published successfully!");
+      setSelectedAttendanceClass(null); // Automatically redirect back to main classes overview page!
     } catch (e) {
       alert("Error saving attendance");
     } finally {
@@ -2512,106 +2516,354 @@ export const Dashboard: React.FC = () => {
 
         {/* ─── NEW MODULE 1: DAILY ATTENDANCE ─── */}
         {activeTab === "attendance" && (
-          <div className="space-y-6">
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-4">
-                <div>
-                  <h3 className="text-base font-heading font-extrabold text-white flex items-center gap-2">
-                    <UserCheck className="w-5 h-5 text-amber-400" /> Daily Student Attendance Tracker
-                  </h3>
-                  <p className="text-xs text-slate-400">Mark daily attendance for class rosters and save records.</p>
-                </div>
-                <div className="flex flex-wrap items-center gap-3">
-                  <input
-                    type="date"
-                    value={attendanceDate}
-                    onChange={(e) => setAttendanceDate(e.target.value)}
-                    className="p-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white"
-                  />
-                  <select
-                    value={attendanceClass}
-                    onChange={(e) => setAttendanceClass(e.target.value)}
-                    className="p-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-amber-400 font-bold"
-                  >
-                    {["Class Nursery", "Class LKG", "Class UKG", "Class I", "Class II", "Class III", "Class IV", "Class V", "Class VI", "Class VII", "Class VIII", "Class IX", "Class X", "Class XI", "Class XII"].map(c => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
-                  <button
-                    onClick={handleSaveAttendance}
-                    disabled={attendanceSaving}
-                    className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-md transition-all disabled:opacity-50"
-                  >
-                    <UserCheck className="w-4 h-4" />
-                    <span>{attendanceSaving ? "Saving..." : "Save Attendance"}</span>
-                  </button>
-                </div>
+          <div className="space-y-8">
+            
+            {/* Top Action Header Banner */}
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <span className="text-[10px] font-extrabold text-amber-400 uppercase tracking-widest bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/20">
+                  Daily Attendance Management
+                </span>
+                <h3 className="font-heading font-extrabold text-white text-xl mt-1 flex items-center gap-2">
+                  <UserCheck className="w-6 h-6 text-amber-400" /> Daily Student Attendance Tracker
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Select a class to mark daily attendance or inspect today's attendance summary.
+                </p>
               </div>
 
-              {/* Roster Table */}
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs border-collapse">
-                  <thead>
-                    <tr className="border-b border-slate-800 text-slate-400">
-                      <th className="py-3 px-4">SR / Roll</th>
-                      <th className="py-3 px-4">Student Name</th>
-                      <th className="py-3 px-4">Father Name</th>
-                      <th className="py-3 px-4 text-center">Status Toggle</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800/60">
-                    {students.filter(s => {
-                      const rawCls = s.class || "General";
-                      const cls = rawCls.toLowerCase().includes("class") ? rawCls : `Class ${rawCls}`;
-                      return cls === attendanceClass;
-                    }).length === 0 ? (
-                      <tr>
-                        <td colSpan={4} className="py-8 text-center text-slate-500">No students registered in {attendanceClass}.</td>
-                      </tr>
-                    ) : (
-                      students
-                        .filter(s => {
-                          const rawCls = s.class || "General";
-                          const cls = rawCls.toLowerCase().includes("class") ? rawCls : `Class ${rawCls}`;
-                          return cls === attendanceClass;
-                        })
-                        .map((s) => {
-                          const status = attendanceMap[s.id] || "Present";
-                          return (
-                            <tr key={s.id} className="hover:bg-slate-800/40">
-                              <td className="py-3 px-4 font-mono text-amber-400">{s.admission_no || s.roll_no || "-"}</td>
-                              <td className="py-3 px-4 font-bold text-white">{s.name}</td>
-                              <td className="py-3 px-4 text-slate-400">{s.father_name || "N/A"}</td>
-                              <td className="py-3 px-4">
-                                <div className="flex items-center justify-center gap-1.5">
-                                  {(["Present", "Absent", "Late", "Leave"] as const).map((st) => {
-                                    const active = status === st;
-                                    let btnColor = "bg-slate-800 text-slate-400";
-                                    if (active && st === "Present") btnColor = "bg-emerald-500 text-slate-950 shadow-md font-extrabold";
-                                    if (active && st === "Absent") btnColor = "bg-rose-500 text-white shadow-md font-extrabold";
-                                    if (active && st === "Late") btnColor = "bg-amber-500 text-slate-950 shadow-md font-extrabold";
-                                    if (active && st === "Leave") btnColor = "bg-blue-500 text-white shadow-md font-extrabold";
-                                    return (
-                                      <button
-                                        key={st}
-                                        type="button"
-                                        onClick={() => setAttendanceMap({ ...attendanceMap, [s.id]: st })}
-                                        className={`px-3 py-1 rounded-lg text-[11px] transition-all ${btnColor}`}
-                                      >
-                                        {st}
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })
-                    )}
-                  </tbody>
-                </table>
+              <div className="flex items-center gap-3">
+                {/* Locked Date Badge */}
+                <div className="px-4 py-2 bg-slate-950 border border-amber-500/30 rounded-2xl flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                  <span className="text-xs font-bold text-slate-400">Date (Locked):</span>
+                  <span className="text-xs font-bold text-amber-400 font-mono">
+                    Today ({new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })})
+                  </span>
+                </div>
               </div>
             </div>
+
+            {/* CASE 1: MAIN CLASSES OVERVIEW LIST (NO CLASS SELECTED) */}
+            {selectedAttendanceClass === null ? (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-heading font-extrabold text-white text-base tracking-wide flex items-center gap-2">
+                    School Class Directory ({[
+                      "Class Nursery", "Class LKG", "Class UKG", "Class I", "Class II", "Class III", "Class IV", "Class V", "Class VI", "Class VII", "Class VIII", "Class IX", "Class X", "Class XI", "Class XII"
+                    ].length} Classes)
+                  </h4>
+                  <span className="text-xs font-bold text-slate-400">
+                    Click "Mark Attendance" or "View Attendance" for any class
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+                  {[
+                    "Class Nursery", "Class LKG", "Class UKG", "Class I", "Class II", "Class III", "Class IV", "Class V", "Class VI", "Class VII", "Class VIII", "Class IX", "Class X", "Class XI", "Class XII"
+                  ].map((clsName) => {
+                    const classStudents = students.filter(s => {
+                      const rawCls = s.class || "General";
+                      const cls = rawCls.toLowerCase().includes("class") ? rawCls : `Class ${rawCls}`;
+                      return cls === clsName;
+                    });
+
+                    // Check marked count
+                    const markedCount = classStudents.filter(s => attendanceMap[s.id]).length;
+                    const isFullyMarked = classStudents.length > 0 && markedCount >= classStudents.length;
+
+                    return (
+                      <div
+                        key={clsName}
+                        className="bg-slate-900 border border-slate-800 hover:border-amber-500/60 rounded-3xl p-5 shadow-xl transition-all space-y-4 flex flex-col justify-between group"
+                      >
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold">
+                              <UserCheck className="w-5 h-5" />
+                            </div>
+                            <span className="text-[10px] font-extrabold text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20">
+                              {classStudents.length} Students
+                            </span>
+                          </div>
+
+                          <div>
+                            <h4 className="font-heading font-extrabold text-white text-lg group-hover:text-amber-400 transition-colors">
+                              {clsName}
+                            </h4>
+                            <p className="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
+                              {isFullyMarked ? (
+                                <span className="text-emerald-400 font-bold flex items-center gap-1">
+                                  🟢 Attendance Marked ✓
+                                </span>
+                              ) : (
+                                <span className="text-amber-400 font-bold flex items-center gap-1">
+                                  🟡 Attendance Pending
+                                </span>
+                              )}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* DUAL ACTION BUTTONS: VIEW & MARK */}
+                        <div className="grid grid-cols-2 gap-2 pt-3 border-t border-slate-800">
+                          <button
+                            onClick={() => {
+                              setSelectedAttendanceClass(clsName);
+                              setAttendanceMode("view");
+                            }}
+                            className="px-3 py-2 bg-slate-950 hover:bg-slate-800 text-slate-300 hover:text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1 transition-all border border-slate-800"
+                          >
+                            <Eye className="w-3.5 h-3.5 text-amber-400" /> View
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedAttendanceClass(clsName);
+                              setAttendanceMode("mark");
+                            }}
+                            className="px-3 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold rounded-xl text-xs flex items-center justify-center gap-1 transition-all shadow-md"
+                          >
+                            <UserCheck className="w-3.5 h-3.5" /> Mark
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              /* CASE 2: SELECTED CLASS ROSTER VIEW & CLASS OVERVIEW BANNER */
+              <div className="space-y-6">
+                
+                {/* Back button & Class Header */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <button
+                    onClick={() => setSelectedAttendanceClass(null)}
+                    className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white font-bold text-xs rounded-xl flex items-center gap-2 border border-slate-800 w-fit transition-all"
+                  >
+                    ← Back to All Classes List
+                  </button>
+
+                  <div className="flex items-center gap-3">
+                    <div className="p-1 bg-slate-950 border border-slate-800 rounded-2xl flex">
+                      <button
+                        onClick={() => setAttendanceMode("mark")}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                          attendanceMode === "mark"
+                            ? "bg-amber-500 text-slate-950 shadow-md font-extrabold"
+                            : "text-slate-400 hover:text-white"
+                        }`}
+                      >
+                        ✍️ Mark Roster
+                      </button>
+                      <button
+                        onClick={() => setAttendanceMode("view")}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                          attendanceMode === "view"
+                            ? "bg-amber-500 text-slate-950 shadow-md font-extrabold"
+                            : "text-slate-400 hover:text-white"
+                        }`}
+                      >
+                        👁️ Class Summary
+                      </button>
+                    </div>
+
+                    <button
+                      onClick={handleSaveAttendance}
+                      disabled={attendanceSaving}
+                      className="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs rounded-2xl shadow-xl flex items-center gap-2 transition-all disabled:opacity-50"
+                    >
+                      <UserCheck className="w-4 h-4" />
+                      <span>{attendanceSaving ? "Saving..." : "Save & Publish Attendance"}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* LIVE CLASS OVERVIEW STATS BANNER */}
+                {(() => {
+                  const classStudents = students.filter(s => {
+                    const rawCls = s.class || "General";
+                    const cls = rawCls.toLowerCase().includes("class") ? rawCls : `Class ${rawCls}`;
+                    return cls === selectedAttendanceClass;
+                  });
+
+                  const total = classStudents.length;
+                  const presentCount = classStudents.filter(s => (attendanceMap[s.id] || "Present") === "Present").length;
+                  const absentCount = classStudents.filter(s => attendanceMap[s.id] === "Absent").length;
+                  const lateCount = classStudents.filter(s => attendanceMap[s.id] === "Late").length;
+                  const leaveCount = classStudents.filter(s => attendanceMap[s.id] === "Leave").length;
+                  const presentPct = total > 0 ? Math.round((presentCount / total) * 100) : 0;
+
+                  return (
+                    <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                        <div>
+                          <span className="text-[10px] font-extrabold text-amber-400 uppercase tracking-widest bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20">
+                            Class Roster Overview
+                          </span>
+                          <h3 className="text-xl font-heading font-extrabold text-white mt-1">
+                            {selectedAttendanceClass} Attendance Record
+                          </h3>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newMap = { ...attendanceMap };
+                              classStudents.forEach(s => {
+                                newMap[s.id] = "Present";
+                              });
+                              setAttendanceMap(newMap);
+                            }}
+                            className="px-4 py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-xl text-xs font-bold transition-all"
+                          >
+                            ⚡ Mark All Present
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* STATS BREAKDOWN GRID */}
+                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                        <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 text-center">
+                          <p className="text-[10px] text-slate-400 font-bold uppercase">Total Enrolled</p>
+                          <p className="text-xl font-heading font-extrabold text-white mt-1">{total}</p>
+                        </div>
+                        <div className="bg-emerald-500/10 p-4 rounded-2xl border border-emerald-500/20 text-center">
+                          <p className="text-[10px] text-emerald-400 font-bold uppercase">Present</p>
+                          <p className="text-xl font-heading font-extrabold text-emerald-400 mt-1">
+                            {presentCount} <span className="text-xs font-normal">({presentPct}%)</span>
+                          </p>
+                        </div>
+                        <div className="bg-rose-500/10 p-4 rounded-2xl border border-rose-500/20 text-center">
+                          <p className="text-[10px] text-rose-400 font-bold uppercase">Absent</p>
+                          <p className="text-xl font-heading font-extrabold text-rose-400 mt-1">{absentCount}</p>
+                        </div>
+                        <div className="bg-amber-500/10 p-4 rounded-2xl border border-amber-500/20 text-center">
+                          <p className="text-[10px] text-amber-400 font-bold uppercase">Late</p>
+                          <p className="text-xl font-heading font-extrabold text-amber-400 mt-1">{lateCount}</p>
+                        </div>
+                        <div className="bg-blue-500/10 p-4 rounded-2xl border border-blue-500/20 text-center">
+                          <p className="text-[10px] text-blue-400 font-bold uppercase">On Leave</p>
+                          <p className="text-xl font-heading font-extrabold text-blue-400 mt-1">{leaveCount}</p>
+                        </div>
+                      </div>
+
+                      {/* MODE 1: MARK ROSTER TABLE */}
+                      {attendanceMode === "mark" ? (
+                        <div className="overflow-x-auto pt-2">
+                          <table className="w-full text-left text-xs border-collapse">
+                            <thead>
+                              <tr className="border-b border-slate-800 text-slate-400 uppercase tracking-wider text-[10px]">
+                                <th className="py-3 px-4">SR / Roll No</th>
+                                <th className="py-3 px-4">Student Name</th>
+                                <th className="py-3 px-4">Father Name</th>
+                                <th className="py-3 px-4 text-center">Daily Status Toggle</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-800/60">
+                              {classStudents.length === 0 ? (
+                                <tr>
+                                  <td colSpan={4} className="py-8 text-center text-slate-500">
+                                    No students registered in {selectedAttendanceClass} yet.
+                                  </td>
+                                </tr>
+                              ) : (
+                                classStudents.map((s) => {
+                                  const status = attendanceMap[s.id] || "Present";
+                                  return (
+                                    <tr key={s.id} className="hover:bg-slate-800/40 transition-colors">
+                                      <td className="py-3 px-4 font-mono text-amber-400 font-bold">
+                                        {s.admission_no || s.roll_no || "-"}
+                                      </td>
+                                      <td className="py-3 px-4 font-bold text-white flex items-center gap-2">
+                                        <img
+                                          src={s.photo_url || "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=400&q=80"}
+                                          alt={s.name}
+                                          className="w-7 h-7 rounded-xl object-cover border border-amber-500/20"
+                                        />
+                                        <span>{s.name}</span>
+                                      </td>
+                                      <td className="py-3 px-4 text-slate-400">{s.father_name || "N/A"}</td>
+                                      <td className="py-3 px-4">
+                                        <div className="flex items-center justify-center gap-1.5">
+                                          {(["Present", "Absent", "Late", "Leave"] as const).map((st) => {
+                                            const active = status === st;
+                                            let btnColor = "bg-slate-950 text-slate-400 border border-slate-800";
+                                            if (active && st === "Present") btnColor = "bg-emerald-500 text-slate-950 shadow-md font-extrabold border-emerald-400";
+                                            if (active && st === "Absent") btnColor = "bg-rose-500 text-white shadow-md font-extrabold border-rose-400";
+                                            if (active && st === "Late") btnColor = "bg-amber-500 text-slate-950 shadow-md font-extrabold border-amber-400";
+                                            if (active && st === "Leave") btnColor = "bg-blue-500 text-white shadow-md font-extrabold border-blue-400";
+                                            return (
+                                              <button
+                                                key={st}
+                                                type="button"
+                                                onClick={() => setAttendanceMap({ ...attendanceMap, [s.id]: st })}
+                                                className={`px-3.5 py-1.5 rounded-xl text-[11px] transition-all ${btnColor}`}
+                                              >
+                                                {st}
+                                              </button>
+                                            );
+                                          })}
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  );
+                                })
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : (
+                        /* MODE 2: CLASS SUMMARY VIEW */
+                        <div className="space-y-4 pt-2">
+                          <h4 className="font-bold text-white text-sm">Absent & On Leave Student Roster</h4>
+                          <div className="grid md:grid-cols-2 gap-3">
+                            {classStudents.filter(s => attendanceMap[s.id] === "Absent" || attendanceMap[s.id] === "Leave").length === 0 ? (
+                              <div className="md:col-span-2 p-6 bg-slate-950 rounded-2xl text-center text-emerald-400 font-bold text-xs border border-emerald-500/20">
+                                🌟 Perfect Attendance! No students are absent or on leave today.
+                              </div>
+                            ) : (
+                              classStudents.filter(s => attendanceMap[s.id] === "Absent" || attendanceMap[s.id] === "Leave").map(s => (
+                                <div key={s.id} className="p-4 bg-slate-950 rounded-2xl border border-slate-800 flex items-center justify-between gap-3">
+                                  <div>
+                                    <h5 className="font-bold text-white text-sm">{s.name}</h5>
+                                    <p className="text-xs text-slate-400">Father: {s.father_name || "N/A"}</p>
+                                    {(s.parent_mobile || s.whatsapp_no) && (
+                                      <p className="text-xs text-emerald-400 font-mono">Parent: {s.parent_mobile || s.whatsapp_no}</p>
+                                    )}
+                                  </div>
+                                  <span className={`px-3 py-1 rounded-xl text-xs font-bold ${
+                                    attendanceMap[s.id] === "Absent" ? "bg-rose-500/20 text-rose-400 border border-rose-500/30" : "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                                  }`}>
+                                    {attendanceMap[s.id]}
+                                  </span>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* SAVE BUTTON AT BOTTOM */}
+                      <div className="pt-4 border-t border-slate-800 flex justify-end">
+                        <button
+                          onClick={handleSaveAttendance}
+                          disabled={attendanceSaving}
+                          className="px-8 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs rounded-xl shadow-xl flex items-center gap-2 transition-all disabled:opacity-50"
+                        >
+                          <UserCheck className="w-4 h-4" />
+                          <span>{attendanceSaving ? "Saving..." : "Save & Return to Classes"}</span>
+                        </button>
+                      </div>
+
+                    </div>
+                  );
+                })()}
+
+              </div>
+            )}
+
           </div>
         )}
 
