@@ -160,7 +160,7 @@ export const Dashboard: React.FC = () => {
         fetchAchievements(),
         fetchGallery(),
         fetchCalendar(),
-        fetchAttendance(attendanceDate, attendanceClass),
+        fetchAttendance(attendanceDate, selectedAttendanceClass || "Class I"),
         fetchExamMarks(examTerm, examClass),
         fetchFeeCollections()
       ]);
