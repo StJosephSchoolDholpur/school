@@ -145,6 +145,25 @@ CREATE TABLE IF NOT EXISTS public.teachers (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- SAFELY ADD MISSING TEACHER COLUMNS
+ALTER TABLE public.teachers ADD COLUMN IF NOT EXISTS emp_id TEXT;
+ALTER TABLE public.teachers ADD COLUMN IF NOT EXISTS gender TEXT;
+ALTER TABLE public.teachers ADD COLUMN IF NOT EXISTS joining_date DATE;
+ALTER TABLE public.teachers ADD COLUMN IF NOT EXISTS qualification TEXT;
+ALTER TABLE public.teachers ADD COLUMN IF NOT EXISTS experience_years TEXT;
+ALTER TABLE public.teachers ADD COLUMN IF NOT EXISTS subjects_taught TEXT;
+ALTER TABLE public.teachers ADD COLUMN IF NOT EXISTS classes_assigned TEXT;
+ALTER TABLE public.teachers ADD COLUMN IF NOT EXISTS address TEXT;
+ALTER TABLE public.teachers ADD COLUMN IF NOT EXISTS city_state TEXT;
+ALTER TABLE public.teachers ADD COLUMN IF NOT EXISTS pincode TEXT;
+ALTER TABLE public.teachers ADD COLUMN IF NOT EXISTS blood_group TEXT;
+ALTER TABLE public.teachers ADD COLUMN IF NOT EXISTS aadhaar_no TEXT;
+ALTER TABLE public.teachers ADD COLUMN IF NOT EXISTS pan_no TEXT;
+ALTER TABLE public.teachers ADD COLUMN IF NOT EXISTS emergency_contact_name TEXT;
+ALTER TABLE public.teachers ADD COLUMN IF NOT EXISTS emergency_contact_phone TEXT;
+ALTER TABLE public.teachers ADD COLUMN IF NOT EXISTS pay_grade TEXT;
+ALTER TABLE public.teachers ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
+
 -- 8. ENABLE ROW LEVEL SECURITY (RLS) & POLICIES FOR ALL TABLES
 ALTER TABLE public.students ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.teachers ENABLE ROW LEVEL SECURITY;

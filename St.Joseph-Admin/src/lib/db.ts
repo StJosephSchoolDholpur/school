@@ -15,15 +15,30 @@ export const supabase = createClient(
 
 export interface Teacher {
   id: string;
+  emp_id?: string;
   name: string;
+  gender?: string;
   designation: string;
   department?: string;
   dob: string; // YYYY-MM-DD
-  photo_url?: string;
-  email?: string;
-  phone?: string;
   joining_date?: string;
+  qualification?: string;
+  experience_years?: string;
+  subjects_taught?: string;
+  classes_assigned?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  city_state?: string;
+  pincode?: string;
+  blood_group?: string;
+  aadhaar_no?: string;
+  pan_no?: string;
+  emergency_contact_name?: string;
+  emergency_contact_phone?: string;
+  pay_grade?: string;
   is_active?: boolean;
+  photo_url?: string;
   wishes?: string;
   created_at?: string;
 }
@@ -537,48 +552,40 @@ export async function fetchTeachers(): Promise<Teacher[]> {
 
 export async function saveTeacherRecord(t: Omit<Teacher, "id"> & { id?: string }): Promise<Teacher> {
   const record: Teacher = {
+    ...t,
     id: t.id || `t_${Date.now()}`,
+    emp_id: t.emp_id || `EMP-2026-${Math.floor(100 + Math.random() * 900)}`,
     name: t.name,
-    designation: t.designation,
+    gender: t.gender || "Male",
+    designation: t.designation || "PGT Teacher",
     department: t.department || "General",
-    dob: t.dob,
+    dob: t.dob || "1990-01-01",
+    joining_date: t.joining_date || new Date().toISOString().split("T")[0],
     photo_url: t.photo_url || "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=400&q=80",
     email: t.email || "",
     phone: t.phone || "",
-    joining_date: t.joining_date || new Date().toISOString().split("T")[0],
     is_active: t.is_active ?? true,
     wishes: t.wishes || "Happy Birthday!",
-    created_at: new Date().toISOString(),
+    created_at: t.created_at || new Date().toISOString(),
   };
 
   if (SUPABASE_ANON_KEY) {
     try {
-      const dbPayload: any = {
-        name: record.name,
-        designation: record.designation,
-        department: record.department,
-        dob: record.dob,
-        photo_url: record.photo_url,
-        email: record.email,
-        phone: record.phone,
-        joining_date: record.joining_date,
-        is_active: record.is_active,
-        wishes: record.wishes,
-      };
+      const dbPayload: any = cleanPayload(record);
       if (t.id && !t.id.startsWith("t_")) {
         dbPayload.id = t.id;
+      } else {
+        delete dbPayload.id;
       }
 
       const { data, error } = await supabase.from("teachers").upsert([dbPayload]).select();
       if (error) {
         console.error("Supabase teacher save error:", error);
-        alert("⚠️ Supabase Save Error: " + error.message);
       } else if (data && data[0]?.id) {
         record.id = data[0].id;
       }
     } catch (e: any) {
       console.error("Supabase teacher save exception:", e);
-      alert("⚠️ Connection Exception: " + e.message);
     }
   }
 

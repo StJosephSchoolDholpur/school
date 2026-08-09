@@ -22,12 +22,12 @@ export const StudentAdmissionModal: React.FC<StudentAdmissionModalProps> = ({
     name: "",
     dob: "",
     age_march31: "",
-    blood_group: "O+",
-    class: "Class Nursery",
-    nationality: "Indian",
-    religion: "Hinduism",
-    category: "General",
-    gender: "Male",
+    blood_group: "",
+    class: "",
+    nationality: "",
+    religion: "",
+    category: "",
+    gender: "",
     medical_condition: "",
     address: "",
     city_state: "",
@@ -56,8 +56,8 @@ export const StudentAdmissionModal: React.FC<StudentAdmissionModalProps> = ({
     // Previous School & Sibling
     previous_school_name: "",
     previous_class: "",
-    previous_medium: "English",
-    previous_board: "CBSE",
+    previous_medium: "",
+    previous_board: "",
     previous_school_address: "",
     previous_marks: "",
     has_sibling: false,
@@ -154,7 +154,7 @@ export const StudentAdmissionModal: React.FC<StudentAdmissionModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 md:p-6 overflow-y-auto animate-in fade-in duration-200">
       <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-4xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
-        
+
         {/* Header */}
         <div className="p-5 bg-slate-950 border-b border-slate-800 flex items-center justify-between shrink-0">
           <div>
@@ -188,20 +188,18 @@ export const StudentAdmissionModal: React.FC<StudentAdmissionModalProps> = ({
               return (
                 <div key={s.num} className="flex items-center gap-2">
                   <div
-                    className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs transition-all ${
-                      isCompleted
-                        ? "bg-emerald-500 text-slate-950"
-                        : isActive
+                    className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs transition-all ${isCompleted
+                      ? "bg-emerald-500 text-slate-950"
+                      : isActive
                         ? "bg-amber-500 text-slate-950 shadow-md font-extrabold"
                         : "bg-slate-800 text-slate-400"
-                    }`}
+                      }`}
                   >
                     {isCompleted ? <Check className="w-4 h-4" /> : s.num}
                   </div>
                   <span
-                    className={`text-xs font-bold hidden md:inline ${
-                      isActive ? "text-amber-400" : isCompleted ? "text-emerald-400" : "text-slate-500"
-                    }`}
+                    className={`text-xs font-bold hidden md:inline ${isActive ? "text-amber-400" : isCompleted ? "text-emerald-400" : "text-slate-500"
+                      }`}
                   >
                     {s.label}
                   </span>
@@ -214,7 +212,7 @@ export const StudentAdmissionModal: React.FC<StudentAdmissionModalProps> = ({
 
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6 overflow-y-auto flex-1 text-xs">
-          
+
           {/* PAGE 1: CHILD BASIC INFO */}
           {currentStep === 1 && (
             <div className="space-y-5 animate-in slide-in-from-right duration-200">
@@ -618,9 +616,8 @@ export const StudentAdmissionModal: React.FC<StudentAdmissionModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, has_sibling: !formData.has_sibling })}
-                    className={`px-4 py-1.5 rounded-xl font-bold transition-all ${
-                      formData.has_sibling ? "bg-emerald-500 text-slate-950" : "bg-slate-800 text-slate-400"
-                    }`}
+                    className={`px-4 py-1.5 rounded-xl font-bold transition-all ${formData.has_sibling ? "bg-emerald-500 text-slate-950" : "bg-slate-800 text-slate-400"
+                      }`}
                   >
                     {formData.has_sibling ? "YES" : "NO"}
                   </button>
@@ -785,11 +782,10 @@ export const StudentAdmissionModal: React.FC<StudentAdmissionModalProps> = ({
                         <div
                           key={doc}
                           onClick={() => toggleDocument(doc)}
-                          className={`p-2.5 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${
-                            checked
-                              ? "bg-emerald-500/10 border-emerald-500 text-emerald-400 font-bold"
-                              : "bg-slate-900 border-slate-800 text-slate-400"
-                          }`}
+                          className={`p-2.5 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${checked
+                            ? "bg-emerald-500/10 border-emerald-500 text-emerald-400 font-bold"
+                            : "bg-slate-900 border-slate-800 text-slate-400"
+                            }`}
                         >
                           <span className="text-[11px]">{doc}</span>
                           {checked && <Check className="w-3.5 h-3.5" />}

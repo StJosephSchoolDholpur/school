@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { Sidebar, AdminTab } from "../components/Sidebar";
 import { WhatsAppBirthdayManager } from "../components/WhatsAppBirthdayManager";
 import { StudentAdmissionModal } from "../components/StudentAdmissionModal";
+import { TeacherRegistrationModal } from "../components/TeacherRegistrationModal";
 import {
   fetchTCs,
   uploadAndSaveTC,
@@ -131,6 +132,7 @@ export const Dashboard: React.FC = () => {
   const [selectedReceiptForPrint, setSelectedReceiptForPrint] = useState<FeeReceiptRecord | null>(null);
   const [activeRole, setActiveRole] = useState<"super_admin" | "principal" | "accountant" | "teacher">("super_admin");
   const [isAdmissionModalOpen, setIsAdmissionModalOpen] = useState<boolean>(false);
+  const [isTeacherModalOpen, setIsTeacherModalOpen] = useState<boolean>(false);
 
   const [selectedBookClassModal, setSelectedBookClassModal] = useState<string | null>(null);
   const [selectedTcClassModal, setSelectedTcClassModal] = useState<string | null>(null);
@@ -326,6 +328,11 @@ export const Dashboard: React.FC = () => {
   const handleSaveAdmissionModal = async (studentData: Partial<Student>) => {
     const saved = await saveStudentRecord(studentData as any);
     setStudents([saved, ...students]);
+  };
+
+  const handleSaveTeacherModal = async (teacherData: Partial<Teacher>) => {
+    const saved = await saveTeacherRecord(teacherData as any);
+    setTeachers([saved, ...teachers]);
   };
 
   const handleAddTC = async (e: React.FormEvent) => {
@@ -931,96 +938,120 @@ export const Dashboard: React.FC = () => {
 
         {/* ─── TAB 3: TEACHERS & BIRTHDAYS ─── */}
         {activeTab === "teachers" && (
-          <div className="space-y-8">
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
-              <h3 className="font-heading font-bold text-white text-lg flex items-center gap-2">
-                <Plus className="w-5 h-5 text-amber-400" /> Add Teacher & Set Birthday
-              </h3>
-              <form onSubmit={handleAddTeacher} className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-                <div>
-                  <label className="block text-slate-400 font-bold mb-1">Teacher Name *</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Mr. Praveen Tyagi"
-                    value={newTeacher.name}
-                    onChange={(e) => setNewTeacher({ ...newTeacher, name: e.target.value })}
-                    required
-                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-slate-400 font-bold mb-1">Designation *</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. PGT Mathematics"
-                    value={newTeacher.designation}
-                    onChange={(e) => setNewTeacher({ ...newTeacher, designation: e.target.value })}
-                    required
-                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-slate-400 font-bold mb-1">Department</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Science & Math"
-                    value={newTeacher.department}
-                    onChange={(e) => setNewTeacher({ ...newTeacher, department: e.target.value })}
-                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-slate-400 font-bold mb-1">Date of Birth (DOB) *</label>
-                  <input
-                    type="date"
-                    value={newTeacher.dob}
-                    onChange={(e) => setNewTeacher({ ...newTeacher, dob: e.target.value })}
-                    required
-                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-slate-400 font-bold mb-1">WhatsApp Phone No.</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. +91 9829123456"
-                    value={newTeacher.phone}
-                    onChange={(e) => setNewTeacher({ ...newTeacher, phone: e.target.value })}
-                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-slate-400 font-bold mb-1">Email Address</label>
-                  <input
-                    type="email"
-                    placeholder="e.g. teacher@stjoseph.com"
-                    value={newTeacher.email}
-                    onChange={(e) => setNewTeacher({ ...newTeacher, email: e.target.value })}
-                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
-                  />
-                </div>
-                <div className="md:col-span-3">
-                  <button type="submit" className="w-full py-3 bg-amber-500 text-slate-950 font-bold rounded-xl text-xs">
-                    Save Teacher Record
-                  </button>
-                </div>
-              </form>
+          <div className="space-y-8 relative">
+            
+            {/* Top Action Header Banner */}
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <span className="text-[10px] font-extrabold text-amber-400 uppercase tracking-widest bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/20">
+                  Faculty & Staff Management
+                </span>
+                <h3 className="font-heading font-extrabold text-white text-xl mt-1 flex items-center gap-2">
+                  School Faculty Directory ({teachers.length} Active Teachers)
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Manage faculty profiles, designations, academic qualifications, and birthday wishes.
+                </p>
+              </div>
+
+              <button
+                onClick={() => setIsTeacherModalOpen(true)}
+                className="px-6 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs rounded-2xl shadow-xl flex items-center gap-2 transition-all shrink-0 hover:scale-105"
+              >
+                <Plus className="w-4 h-4" />
+                <span>+ Register New Teacher</span>
+              </button>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-4">
+            {/* CARD-WISE TEACHERS DIRECTORY */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {teachers.map((t) => (
-                <div key={t.id} className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-2 relative">
-                  <button onClick={() => handleDeleteTeacher(t.id)} className="absolute top-4 right-4 text-red-400 hover:text-red-300">
+                <div
+                  key={t.id}
+                  className="bg-slate-900 border border-slate-800 hover:border-amber-500/50 rounded-3xl p-5 shadow-xl space-y-4 relative group flex flex-col justify-between transition-all"
+                >
+                  <button
+                    onClick={() => handleDeleteTeacher(t.id)}
+                    className="absolute top-4 right-4 text-slate-600 hover:text-red-400 transition-colors"
+                    title="Delete Teacher Record"
+                  >
                     <Trash2 className="w-4 h-4" />
                   </button>
-                  <h4 className="font-bold text-white text-sm">{t.name}</h4>
-                  <p className="text-xs text-amber-400 font-bold">{t.designation} {t.department ? `(${t.department})` : ""}</p>
-                  <p className="text-xs text-slate-400">📅 DOB: {t.dob}</p>
-                  {t.phone && <p className="text-xs text-emerald-400">📲 Mobile: {t.phone}</p>}
-                  {t.email && <p className="text-xs text-slate-400">✉️ Email: {t.email}</p>}
+
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={t.photo_url || "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=400&q=80"}
+                        alt={t.name}
+                        className="w-14 h-14 rounded-2xl object-cover border border-amber-500/30 shrink-0"
+                      />
+                      <div className="space-y-0.5">
+                        <span className="text-[10px] font-extrabold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 font-mono">
+                          {t.emp_id || "EMP-2026"}
+                        </span>
+                        <h4 className="font-heading font-extrabold text-white text-base group-hover:text-amber-400 transition-colors">
+                          {t.name}
+                        </h4>
+                        <p className="text-xs font-bold text-amber-400">
+                          {t.designation} {t.department ? `(${t.department})` : ""}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5 text-xs text-slate-400 pt-1 border-t border-slate-800/80">
+                      <p className="flex items-center gap-1.5">
+                        <span>📅 DOB:</span> <strong className="text-slate-300 font-mono">{t.dob}</strong>
+                      </p>
+                      {t.joining_date && (
+                        <p className="flex items-center gap-1.5">
+                          <span>🗓️ Joined:</span> <strong className="text-slate-300 font-mono">{t.joining_date}</strong>
+                        </p>
+                      )}
+                      {t.qualification && (
+                        <p className="flex items-center gap-1.5">
+                          <span>🎓 Qualification:</span> <strong className="text-slate-300">{t.qualification}</strong>
+                        </p>
+                      )}
+                      {t.phone && (
+                        <p className="flex items-center gap-1.5 text-emerald-400 font-mono">
+                          <span>📲 WhatsApp:</span> <strong>{t.phone}</strong>
+                        </p>
+                      )}
+                      {t.email && (
+                        <p className="flex items-center gap-1.5 text-slate-400">
+                          <span>✉️ Email:</span> <strong className="text-slate-300">{t.email}</strong>
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
+                    <span className="text-amber-400 font-bold bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20">
+                      {t.department || "Faculty"}
+                    </span>
+                    <span className="text-emerald-400 font-bold">Active Faculty ✓</span>
+                  </div>
                 </div>
               ))}
             </div>
+
+            {/* FLOATING ACTION BUTTON (FAB) FOR TEACHER REGISTRATION */}
+            <button
+              onClick={() => setIsTeacherModalOpen(true)}
+              className="fixed bottom-8 right-8 z-40 px-6 py-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs rounded-full shadow-2xl flex items-center gap-2.5 border-2 border-amber-300 transition-all hover:scale-105 animate-pulse"
+              title="Open Teacher Faculty Registration Form"
+            >
+              <Plus className="w-5 h-5" />
+              <span>+ Add Teacher Form</span>
+            </button>
+
+            {/* TEACHER REGISTRATION MODAL */}
+            <TeacherRegistrationModal
+              isOpen={isTeacherModalOpen}
+              onClose={() => setIsTeacherModalOpen(false)}
+              onSaveTeacher={handleSaveTeacherModal}
+            />
+
           </div>
         )}
 
