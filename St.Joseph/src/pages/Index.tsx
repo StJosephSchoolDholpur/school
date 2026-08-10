@@ -13,7 +13,6 @@ import library from "@/assets/School-building.jpeg"
 import { useEffect, useState } from "react";
 import AdmissionPopup from  "../pages/Admissionpop"
 import video from "@/assets/video.mp4"
-import BirthdaySection from "@/components/BirthdaySection";
 import { fetchEvents, fetchNews } from "@/lib/db";
 import {
   MapPin, Clock,
@@ -613,8 +612,7 @@ const Index = () => {
 
 
 
-      {/* Birthday Celebrations Section */}
-      <BirthdaySection />
+
 
       {/* CTA */}
       <section className="relative py-20 overflow-hidden">
