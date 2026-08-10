@@ -22,7 +22,6 @@ const defaultSettings: NotificationSettings = {
   max_retries: 3,
   max_rate_per_min: 60,
   school_name: "St. Joseph's International School",
-  principal_name: "Mr. Praveen Tyagi",
   footer_text: "St. Joseph's International School, Dholpur (CBSE Affiliated)",
   api_credentials: {}
 };
@@ -40,10 +39,9 @@ Warm birthday wishes to our dear student *{{student_name}}* (Class {{class}}-{{s
 
 May this special day bring happiness, good health, wisdom, and success. May your child continue to shine bright and achieve great milestones! 🎂✨
 
-Regards,
-*{{principal_name}}*
+Best Regards,
 *{{school_name}}*`,
-    variables: ["student_name", "parent_name", "class", "section", "school_name", "principal_name"],
+    variables: ["student_name", "parent_name", "class", "section", "school_name"],
     is_active: true,
     provider: "Meta",
     meta_template_name: "student_bday_1"
@@ -58,7 +56,7 @@ Dear {{parent_name}}, on this special day, the management & faculty of {{school_
 
 Keep shining bright! 🎈
 
-Best Wishes,
+Best Regards,
 *{{school_name}}*`,
     variables: ["student_name", "parent_name", "school_name"],
     is_active: true,
@@ -73,10 +71,9 @@ Best Wishes,
 
 Dear {{parent_name}}, may your child's birthday be filled with sweet moments and big dreams. May {{student_name}} reach new heights in learning and character!
 
-Regards,
-*{{principal_name}}*
+Best Regards,
 *{{school_name}}*`,
-    variables: ["student_name", "parent_name", "class", "school_name", "principal_name"],
+    variables: ["student_name", "parent_name", "class", "school_name"],
     is_active: true,
     provider: "Meta",
     meta_template_name: "student_bday_3"
@@ -89,7 +86,7 @@ Regards,
 
 Dear {{parent_name}}, we are proud to have {{student_name}} as part of our {{school_name}} family. Wishing them a fantastic year of growth, joy, and success! 🏆
 
-Warm Wishes,
+Warm Regards,
 *{{school_name}} Management*`,
     variables: ["student_name", "parent_name", "school_name"],
     is_active: true,
@@ -104,7 +101,7 @@ Warm Wishes,
 
 Dear {{parent_name}}, wishing your child a day as special and wonderful as they are. May God bless {{student_name}} with bright knowledge, curiosity, and happiness!
 
-With Love & Blessings,
+With Love & Best Regards,
 *{{school_name}}*`,
     variables: ["student_name", "parent_name", "school_name"],
     is_active: true,
@@ -120,8 +117,8 @@ With Love & Blessings,
 Happy Birthday to *{{student_name}}* (Class {{class}}-{{section}})! May courage, curiosity, and kindness guide your child to great success in the academic year ahead. 📚🎉
 
 Warm Regards,
-*{{principal_name}}*`,
-    variables: ["student_name", "parent_name", "class", "section", "principal_name"],
+*{{school_name}}*`,
+    variables: ["student_name", "parent_name", "class", "section", "school_name"],
     is_active: true,
     provider: "Meta",
     meta_template_name: "student_bday_6"
@@ -134,7 +131,7 @@ Warm Regards,
 
 Dear {{parent_name}}, today we celebrate {{student_name}}'s special day! Wishing them endless smiles, fun memories, and outstanding learning.
 
-Happy Birthday! 🎂
+Best Regards,
 *{{school_name}}*`,
     variables: ["student_name", "parent_name", "school_name"],
     is_active: true,
@@ -149,7 +146,7 @@ Happy Birthday! 🎂
 
 Dear {{parent_name}}, another wonderful year of learning and growing! We wish {{student_name}} a joyful birthday celebration and a bright future.
 
-Best Wishes,
+Best Regards,
 *{{school_name}}*`,
     variables: ["student_name", "parent_name", "school_name"],
     is_active: true,
@@ -168,10 +165,9 @@ Warmest birthday wishes to our esteemed faculty member! 🎂
 
 Thank you for your dedication, wisdom, and guiding our students towards excellence. May your year be filled with happiness, good health, and success. ✨
 
-Regards,
-*{{principal_name}}*
+Best Regards,
 *{{school_name}}*`,
-    variables: ["teacher_name", "principal_name", "school_name"],
+    variables: ["teacher_name", "school_name"],
     is_active: true,
     provider: "Meta",
     meta_template_name: "teacher_bday_1"
@@ -201,9 +197,9 @@ Wishing you a very Happy Birthday! 🎈 Thank you for being a beacon of knowledg
 
 May God bless you with prosperity and health.
 
-Best Wishes,
-*{{principal_name}}*`,
-    variables: ["teacher_name", "principal_name"],
+Best Regards,
+*{{school_name}}*`,
+    variables: ["teacher_name", "school_name"],
     is_active: true,
     provider: "Meta",
     meta_template_name: "teacher_bday_3"
@@ -231,7 +227,7 @@ Warm Regards,
 
 Wishing you a joyful birthday filled with happy moments! We deeply appreciate your valuable contributions to our school's growth.
 
-Happy Birthday! 🥂
+Best Regards,
 *{{school_name}}*`,
     variables: ["teacher_name", "school_name"],
     is_active: true,
@@ -247,8 +243,8 @@ Happy Birthday! 🥂
 May your year ahead be as rewarding and inspiring as the wisdom you impart to our students daily.
 
 Warm Regards,
-*{{principal_name}}*`,
-    variables: ["teacher_name", "principal_name"],
+*{{school_name}}*`,
+    variables: ["teacher_name", "school_name"],
     is_active: true,
     provider: "Meta",
     meta_template_name: "teacher_bday_6"
@@ -276,7 +272,7 @@ Best Regards,
 
 Wishing you good health, peace, and prosperity on your birthday. Thank you for making a difference every single day!
 
-Warmest Wishes,
+Best Regards,
 *{{school_name}}*`,
     variables: ["teacher_name", "school_name"],
     is_active: true,

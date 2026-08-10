@@ -68,6 +68,7 @@ export const WhatsAppBirthdayManager: React.FC<WhatsAppBirthdayManagerProps> = (
   const [settings, setSettings] = useState<NotificationSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [sendingStudentId, setSendingStudentId] = useState<string | null>(null);
+  const [locallySentIds, setLocallySentIds] = useState<Set<string>>(new Set());
   const [isSchedulerRunning, setIsSchedulerRunning] = useState(false);
   const [toastMessage, setToastMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
@@ -129,6 +130,7 @@ export const WhatsAppBirthdayManager: React.FC<WhatsAppBirthdayManagerProps> = (
     try {
       const result = await sendBirthdayWishToStudent(student, templateId);
       if (result.success) {
+        setLocallySentIds((prev) => new Set(prev).add(student.id));
         showToast(`🎉 Birthday wish sent to ${student.student_name || student.name || "Student"}!`);
       } else {
         showToast(`❌ Failed to send wish: ${result.log.error_message || "Unknown error"}`, "error");
@@ -429,9 +431,14 @@ export const WhatsAppBirthdayManager: React.FC<WhatsAppBirthdayManagerProps> = (
                 {todayBirthdays.map((student) => {
                   const isSending = sendingStudentId === student.id;
                   const studentName = student.student_name || student.name || "Student";
-                  const isSentToday = logs.some(
-                    (l) => l.student_id === student.id && l.status === "Sent" && new Date(l.created_at).toISOString().split("T")[0] === new Date().toISOString().split("T")[0]
-                  );
+                  const isSentToday =
+                    locallySentIds.has(student.id) ||
+                    logs.some(
+                      (l) =>
+                        (l.student_id === student.id || l.student_name === studentName) &&
+                        (l.status === "Sent" || l.status === "sent") &&
+                        new Date(l.created_at).toISOString().split("T")[0] === new Date().toISOString().split("T")[0]
+                    );
 
                   return (
                     <div
