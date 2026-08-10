@@ -28,16 +28,16 @@ const defaultSettings: NotificationSettings = {
 
 // 8 Innovative Student Templates + 8 Professional Teacher Templates
 const defaultTemplates: NotificationTemplate[] = [
-  // 🎓 STUDENT TEMPLATES (8 Variations)
+  // 🎓 5 EXCELLENT STUDENT TEMPLATES
   {
     id: "std_tpl_1",
-    name: "Student Wish 1: Official Milestone Wish",
+    name: "Student Wish 1: Official Milestone & Excellence",
     type: "birthday_student",
     body: `🎉 Dear {{parent_name}},
 
-Warm birthday wishes to our dear student *{{student_name}}* (Class {{class}}-{{section}}).
+Warm birthday wishes to our dear student *{{student_name}}* (Class {{class}}-{{section}}). 🎂✨
 
-May this special day bring happiness, good health, wisdom, and success. May your child continue to shine bright and achieve great milestones! 🎂✨
+May this special day bring happiness, wisdom, good health, and success. May your child continue to shine bright and achieve great milestones! 🌟
 
 Best Regards,
 *{{school_name}}*`,
@@ -48,13 +48,13 @@ Best Regards,
   },
   {
     id: "std_tpl_2",
-    name: "Student Wish 2: Bright Future & Excellence",
+    name: "Student Wish 2: Bright Future & Big Dreams",
     type: "birthday_student",
     body: `🌟 Happy Birthday *{{student_name}}*! 🎓
 
 Dear {{parent_name}}, on this special day, the management & faculty of {{school_name}} wish {{student_name}} good health, laughter, and high academic achievements.
 
-Keep shining bright! 🎈
+May {{student_name}} reach new heights in learning and character! 🎈
 
 Best Regards,
 *{{school_name}}*`,
@@ -65,29 +65,29 @@ Best Regards,
   },
   {
     id: "std_tpl_3",
-    name: "Student Wish 3: Dream Big & Succeed",
+    name: "Student Wish 3: Leader of Tomorrow",
     type: "birthday_student",
-    body: `🎂 Special Birthday Greetings to *{{student_name}}* (Class {{class}})! ✨
+    body: `🚀 Happy Birthday *{{student_name}}*!
 
-Dear {{parent_name}}, may your child's birthday be filled with sweet moments and big dreams. May {{student_name}} reach new heights in learning and character!
+Dear {{parent_name}}, we are proud to have {{student_name}} as part of our {{school_name}} family. Wishing them a fantastic year of growth, joy, and academic success! 🏆
 
-Best Regards,
-*{{school_name}}*`,
-    variables: ["student_name", "parent_name", "class", "school_name"],
+Warm Regards,
+*{{school_name}} Management*`,
+    variables: ["student_name", "parent_name", "school_name"],
     is_active: true,
     provider: "Meta",
     meta_template_name: "student_bday_3"
   },
   {
     id: "std_tpl_4",
-    name: "Student Wish 4: Leader of Tomorrow",
+    name: "Student Wish 4: Joyful Blessings & Knowledge",
     type: "birthday_student",
-    body: `🚀 Happy Birthday *{{student_name}}*!
+    body: `🎈 Happy Birthday Dear *{{student_name}}*!
 
-Dear {{parent_name}}, we are proud to have {{student_name}} as part of our {{school_name}} family. Wishing them a fantastic year of growth, joy, and success! 🏆
+Dear {{parent_name}}, wishing your child a day as special and wonderful as they are. May God bless {{student_name}} with bright knowledge, curiosity, and happiness! 📚✨
 
-Warm Regards,
-*{{school_name}} Management*`,
+With Love & Best Regards,
+*{{school_name}}*`,
     variables: ["student_name", "parent_name", "school_name"],
     is_active: true,
     provider: "Meta",
@@ -95,75 +95,30 @@ Warm Regards,
   },
   {
     id: "std_tpl_5",
-    name: "Student Wish 5: Creative & Joyful Blessings",
+    name: "Student Wish 5: Star Student Celebration",
     type: "birthday_student",
-    body: `🎈 Happy Birthday Dear *{{student_name}}*!
+    body: `⭐ Shining Birthday Wishes to *{{student_name}}* (Class {{class}})!
 
-Dear {{parent_name}}, wishing your child a day as special and wonderful as they are. May God bless {{student_name}} with bright knowledge, curiosity, and happiness!
+Dear {{parent_name}}, today we celebrate {{student_name}}'s special day! Wishing them endless smiles, fun memories, and outstanding learning. 🎂🎉
 
-With Love & Best Regards,
+Best Regards,
 *{{school_name}}*`,
-    variables: ["student_name", "parent_name", "school_name"],
+    variables: ["student_name", "parent_name", "class", "school_name"],
     is_active: true,
     provider: "Meta",
     meta_template_name: "student_bday_5"
   },
-  {
-    id: "std_tpl_6",
-    name: "Student Wish 6: Courage & Curiosity",
-    type: "birthday_student",
-    body: `✨ Dear {{parent_name}},
 
-Happy Birthday to *{{student_name}}* (Class {{class}}-{{section}})! May courage, curiosity, and kindness guide your child to great success in the academic year ahead. 📚🎉
-
-Warm Regards,
-*{{school_name}}*`,
-    variables: ["student_name", "parent_name", "class", "section", "school_name"],
-    is_active: true,
-    provider: "Meta",
-    meta_template_name: "student_bday_6"
-  },
-  {
-    id: "std_tpl_7",
-    name: "Student Wish 7: Star Student Celebration",
-    type: "birthday_student",
-    body: `⭐ Shining Birthday Wishes to *{{student_name}}*!
-
-Dear {{parent_name}}, today we celebrate {{student_name}}'s special day! Wishing them endless smiles, fun memories, and outstanding learning.
-
-Best Regards,
-*{{school_name}}*`,
-    variables: ["student_name", "parent_name", "school_name"],
-    is_active: true,
-    provider: "Meta",
-    meta_template_name: "student_bday_7"
-  },
-  {
-    id: "std_tpl_8",
-    name: "Student Wish 8: Joyful Milestone",
-    type: "birthday_student",
-    body: `🎁 Happy Birthday *{{student_name}}*!
-
-Dear {{parent_name}}, another wonderful year of learning and growing! We wish {{student_name}} a joyful birthday celebration and a bright future.
-
-Best Regards,
-*{{school_name}}*`,
-    variables: ["student_name", "parent_name", "school_name"],
-    is_active: true,
-    provider: "Meta",
-    meta_template_name: "student_bday_8"
-  },
-
-  // 👨‍🏫 TEACHER TEMPLATES (8 Variations)
+  // 👨‍🏫 3 PROFESSIONAL TEACHER TEMPLATES
   {
     id: "tch_tpl_1",
-    name: "Teacher Wish 1: Inspiring Mentor Wish",
+    name: "Teacher Wish 1: Inspiring Mentor & Faculty Wish",
     type: "birthday_teacher",
-    body: `🌸 Dear *{{teacher_name}}*,
+    body: `🌸 Dear Respected *{{teacher_name}}*,
 
 Warmest birthday wishes to our esteemed faculty member! 🎂
 
-Thank you for your dedication, wisdom, and guiding our students towards excellence. May your year be filled with happiness, good health, and success. ✨
+Thank you for your dedication, wisdom, and guiding our students towards excellence every day. May your year be filled with happiness, good health, and success! ✨
 
 Best Regards,
 *{{school_name}}*`,
@@ -174,11 +129,11 @@ Best Regards,
   },
   {
     id: "tch_tpl_2",
-    name: "Teacher Wish 2: Dedicated Educator",
+    name: "Teacher Wish 2: Dedicated Educator & Pillar of Knowledge",
     type: "birthday_teacher",
     body: `🎓 Happy Birthday to an exceptional educator, *{{teacher_name}}*!
 
-Your passion for teaching inspires everyone at {{school_name}}. May your special day bring you immense joy and fulfillment!
+Your passion for teaching inspires everyone at {{school_name}}. Thank you for being a beacon of knowledge and character for our school community.
 
 Warm Regards,
 *{{school_name}} Management*`,
@@ -189,13 +144,13 @@ Warm Regards,
   },
   {
     id: "tch_tpl_3",
-    name: "Teacher Wish 3: Pillar of Knowledge",
+    name: "Teacher Wish 3: Excellence & Health Blessings",
     type: "birthday_teacher",
     body: `💐 Respected *{{teacher_name}}*,
 
-Wishing you a very Happy Birthday! 🎈 Thank you for being a beacon of knowledge and character for our school community.
+On your special day, {{school_name}} family extends heartfelt wishes for good health, peace, and prosperity. 🎈
 
-May God bless you with prosperity and health.
+Thank you for making a difference every single day!
 
 Best Regards,
 *{{school_name}}*`,
@@ -203,81 +158,6 @@ Best Regards,
     is_active: true,
     provider: "Meta",
     meta_template_name: "teacher_bday_3"
-  },
-  {
-    id: "tch_tpl_4",
-    name: "Teacher Wish 4: Wisdom & Leadership",
-    type: "birthday_teacher",
-    body: `🌟 Happy Birthday *{{teacher_name}}*!
-
-On your special day, {{school_name}} family extends heartfelt wishes for health, success, and continued joy in shaping future leaders.
-
-Warm Regards,
-*{{school_name}}*`,
-    variables: ["teacher_name", "school_name"],
-    is_active: true,
-    provider: "Meta",
-    meta_template_name: "teacher_bday_4"
-  },
-  {
-    id: "tch_tpl_5",
-    name: "Teacher Wish 5: Valued Contributions",
-    type: "birthday_teacher",
-    body: `🎂 Dear *{{teacher_name}}*,
-
-Wishing you a joyful birthday filled with happy moments! We deeply appreciate your valuable contributions to our school's growth.
-
-Best Regards,
-*{{school_name}}*`,
-    variables: ["teacher_name", "school_name"],
-    is_active: true,
-    provider: "Meta",
-    meta_template_name: "teacher_bday_5"
-  },
-  {
-    id: "tch_tpl_6",
-    name: "Teacher Wish 6: Excellence in Teaching",
-    type: "birthday_teacher",
-    body: `✨ Happy Birthday Respected *{{teacher_name}}*!
-
-May your year ahead be as rewarding and inspiring as the wisdom you impart to our students daily.
-
-Warm Regards,
-*{{school_name}}*`,
-    variables: ["teacher_name", "school_name"],
-    is_active: true,
-    provider: "Meta",
-    meta_template_name: "teacher_bday_6"
-  },
-  {
-    id: "tch_tpl_7",
-    name: "Teacher Wish 7: Educational Champion",
-    type: "birthday_teacher",
-    body: `🎉 Warm Birthday Greetings to *{{teacher_name}}*!
-
-Thank you for your unwavering commitment to educational excellence at {{school_name}}. Wishing you a fantastic year ahead!
-
-Best Regards,
-*{{school_name}} Management*`,
-    variables: ["teacher_name", "school_name"],
-    is_active: true,
-    provider: "Meta",
-    meta_template_name: "teacher_bday_7"
-  },
-  {
-    id: "tch_tpl_8",
-    name: "Teacher Wish 8: Health & Peace Blessings",
-    type: "birthday_teacher",
-    body: `🎈 Happy Birthday *{{teacher_name}}*!
-
-Wishing you good health, peace, and prosperity on your birthday. Thank you for making a difference every single day!
-
-Best Regards,
-*{{school_name}}*`,
-    variables: ["teacher_name", "school_name"],
-    is_active: true,
-    provider: "Meta",
-    meta_template_name: "teacher_bday_8"
   }
 ];
 
@@ -411,32 +291,22 @@ export async function saveNotificationSettings(st: NotificationSettings): Promis
  * Fetch Templates: Automatically merges missing default templates into stored list
  */
 export async function fetchNotificationTemplates(): Promise<NotificationTemplate[]> {
-  let list: NotificationTemplate[] = [];
-
   if (SUPABASE_ANON_KEY) {
     try {
       const { data, error } = await supabase.from("notification_templates").select("*").order("created_at");
-      if (!error && data && data.length > 0) list = data;
+      if (!error && data && data.length === 8) return data;
     } catch {}
   }
-
-  // Ensure all 16 default templates exist in the list
-  const existingIds = new Set(list.map((t) => t.id));
-  for (const defTpl of defaultTemplates) {
-    if (!existingIds.has(defTpl.id)) {
-      list.push(defTpl);
-    }
-  }
-
-  return list;
+  return defaultTemplates;
 }
 
 /**
- * Resets templates back to all 16 default templates (8 Student + 8 Teacher)
+ * Resets templates back to default templates (5 Student + 3 Teacher)
  */
 export async function resetDefaultTemplates(): Promise<NotificationTemplate[]> {
   if (SUPABASE_ANON_KEY) {
     try {
+      await supabase.from("notification_templates").delete().neq("id", "0");
       await supabase.from("notification_templates").upsert(defaultTemplates);
     } catch {}
   }
