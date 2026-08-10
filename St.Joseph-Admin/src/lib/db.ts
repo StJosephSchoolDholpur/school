@@ -893,11 +893,11 @@ function cleanPayload(record: any) {
 export async function fetchTCs(): Promise<TCRecordData[]> {
   try {
     const { data, error } = await supabase.from("tc_records").select("*").order("created_at", { ascending: false });
-    if (!error && data && data.length > 0) return data;
+    if (!error && data) return data;
   } catch (e) {
     console.warn("Supabase fetchTCs error", e);
   }
-  return initialTCs;
+  return [];
 }
 
 export async function uploadAndSaveTC(
@@ -1005,11 +1005,11 @@ export async function deleteTCRecord(id: string): Promise<void> {
 export async function fetchTeachers(): Promise<Teacher[]> {
   try {
     const { data, error } = await supabase.from("teachers").select("*").order("name");
-    if (!error && data && data.length > 0) return data;
+    if (!error && data) return data;
   } catch (e) {
     console.warn("Supabase fetchTeachers error", e);
   }
-  return initialTeachers;
+  return [];
 }
 
 export async function saveTeacherRecord(t: Omit<Teacher, "id"> & { id?: string }): Promise<Teacher> {
@@ -1064,11 +1064,11 @@ export async function deleteTeacherRecord(id: string): Promise<void> {
 export async function fetchStudents(): Promise<Student[]> {
   try {
     const { data, error } = await supabase.from("students").select("*").order("name");
-    if (!error && data && data.length > 0) return data;
+    if (!error && data) return data;
   } catch (e) {
     console.warn("Supabase fetchStudents error", e);
   }
-  return initialStudents;
+  return [];
 }
 
 export async function saveStudentRecord(s: Omit<Student, "id"> & { id?: string }): Promise<Student> {
@@ -1146,11 +1146,11 @@ export async function saveFeeStructure(sections: FeeSection[]): Promise<void> {
 export async function fetchTransportRoutes(): Promise<TransportRoute[]> {
   try {
     const { data, error } = await supabase.from("transportation").select("*");
-    if (!error && data && data.length > 0) return data;
+    if (!error && data) return data;
   } catch (e) {
     console.warn("Supabase fetchTransportRoutes error", e);
   }
-  return initialRoutes;
+  return [];
 }
 
 export async function saveTransportRoute(r: Omit<TransportRoute, "id"> & { id?: string }): Promise<TransportRoute> {
