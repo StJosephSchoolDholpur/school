@@ -436,7 +436,7 @@ export const WhatsAppBirthdayManager: React.FC<WhatsAppBirthdayManagerProps> = (
                     logs.some(
                       (l) =>
                         (l.student_id === student.id || l.student_name === studentName) &&
-                        (l.status === "Sent" || l.status === "sent") &&
+                        l.status === "Sent" &&
                         new Date(l.created_at).toISOString().split("T")[0] === new Date().toISOString().split("T")[0]
                     );
 

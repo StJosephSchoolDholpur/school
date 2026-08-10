@@ -62,7 +62,7 @@ export interface NotificationSettings {
   max_retries: number;
   max_rate_per_min: number;
   school_name: string;
-  principal_name: string;
+  principal_name?: string;
   footer_text: string;
   api_credentials: {
     openwa_api_url?: string;
