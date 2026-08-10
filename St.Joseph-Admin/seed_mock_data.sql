@@ -103,16 +103,19 @@ CREATE TABLE IF NOT EXISTS public.tc_records (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS public.transportation (
+-- Re-create transportation table with double-quoted identifiers for camelCase fields
+DROP TABLE IF EXISTS public.transportation CASCADE;
+
+CREATE TABLE public.transportation (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     area TEXT NOT NULL,
-    busNo TEXT NOT NULL,
+    "busNo" TEXT NOT NULL,
     stops TEXT,
-    pickupTime TEXT,
-    dropTime TEXT,
-    driverName TEXT,
-    driverPhone TEXT,
-    monthlyFee TEXT,
+    "pickupTime" TEXT,
+    "dropTime" TEXT,
+    "driverName" TEXT,
+    "driverPhone" TEXT,
+    "monthlyFee" TEXT,
     status TEXT DEFAULT 'live',
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -128,10 +131,10 @@ CREATE TABLE IF NOT EXISTS public.attendance (
 );
 
 -- 2. CLEAR PREVIOUS SEED DATA TO PREVENT DUPLICATES
-TRUNCATE TABLE public.students, public.teachers, public.tc_records, public.transportation CASCADE;
+TRUNCATE TABLE public.students, public.teachers, public.tc_records CASCADE;
 
 -- 3. INSERT MOCK STUDENTS (Includes Student with TODAY'S DOB for WhatsApp Birthday Testing!)
--- Note: '2010-08-10' matches today's month/day (Aug 10) so WhatsApp Birthday Automation triggers!
+-- Note: (CURRENT_DATE - INTERVAL '16 years')::date sets DOB to today's month/day so WhatsApp Birthday Automation triggers!
 INSERT INTO public.students (
     admission_no, form_no, name, student_name, class, section, roll_no, dob, 
     father_name, mother_name, parent_mobile, whatsapp_no, gender, blood_group, category, religion, 
@@ -139,7 +142,7 @@ INSERT INTO public.students (
 ) VALUES
 (
     'SJ-2026-101', 'FORM-2026-8491', 'Aarav Sharma', 'Aarav Sharma', 'Class X', 'A', '1001', 
-    -- TODAY'S BIRTHDAY FOR TESTING WHATSAPP AUTOMATION (Aug 10th)!
+    -- TODAY'S BIRTHDAY FOR WHATSAPP AUTOMATION TESTING!
     (CURRENT_DATE - INTERVAL '16 years')::date,
     'Mr. Rajendra Sharma', 'Mrs. Sunita Sharma', '+919829123456', '+919829123456', 'Male', 'O+', 'General', 'Hinduism',
     'House No. 42, Civil Lines, Dholpur', 'Dholpur, Rajasthan', '328001',
@@ -218,7 +221,7 @@ INSERT INTO public.teachers (
 ),
 (
     'EMP-2026-102', 'Mrs. Sunita Sharma', 'Female', 'PGT Mathematics', 'Science & Math', 
-    -- TODAY'S BIRTHDAY FOR TEACHER AUTOMATION (Aug 10th)!
+    -- TODAY'S BIRTHDAY FOR TEACHER AUTOMATION!
     (CURRENT_DATE - INTERVAL '36 years')::date,
     '2015-07-10', 'M.Sc. Mathematics, B.Ed', '12 Years', 'Mathematics, Calculus', 'Class IX, Class X, Class XII', 
     '+919829134567', 'sunita.sharma@stjosephdholpur.com', 'Ondela Road, Dholpur', 'Dholpur, Rajasthan', '328001', 'A+', TRUE,
@@ -249,16 +252,16 @@ INSERT INTO public.tc_records (
 ('8012', 'Class VIII', 'Hardik Meena', 'Mohan Meena', '2012-11-05', 'TC-2026-003', '2026-05-20', 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf'),
 ('5009', 'Class V', 'Sneha Khandelwal', 'Rakesh Khandelwal', '2015-09-18', 'TC-2026-004', '2026-05-25', 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf');
 
--- 6. INSERT MOCK BUS ROUTES
+-- 6. INSERT MOCK BUS ROUTES (Uses double quotes for camelCase PostgreSQL column identifiers)
 INSERT INTO public.transportation (
-    area, busNo, stops, pickupTime, dropTime, driverName, driverPhone, monthlyFee, status
+    area, "busNo", stops, "pickupTime", "dropTime", "driverName", "driverPhone", "monthlyFee", status
 ) VALUES
 ('Dholpur City & Railway Station Route', 'RJ-11-PA-101', 'Gulab Bagh, Ondela Road, Police Line, RAC Line, Railway Station', '07:00 AM', '02:15 PM', 'Mr. Ram Singh', '+91 98291-11223', '1,200', 'live'),
 ('Civil Lines & Circuit House Route', 'RJ-11-PA-102', 'Civil Lines, Circuit House, Collectorate, GT Road, Main Market', '07:15 AM', '02:25 PM', 'Mr. Brijesh Sharma', '+91 98292-22334', '1,300', 'live'),
 ('Ondela Road & RAC Line Route', 'RJ-11-PA-103', 'Ondela Chauraha, RAC Battalion Gate, Water Tank, City Hospital', '07:10 AM', '02:20 PM', 'Mr. Satish Kumar', '+91 98293-33445', '1,250', 'live'),
 ('Bari Road & Housing Board Route', 'RJ-11-PA-104', 'Bari Road, Housing Board Colony, Rajakhera Bypass, Sai Mandir', '07:20 AM', '02:30 PM', 'Mr. Jaswant Gurjar', '+91 98294-44556', '1,400', 'live');
 
--- VERIFY ROW COUNTS IN ALL TABLES
+-- 7. VERIFY ROW COUNTS IN ALL TABLES
 SELECT 'students' AS table_name, COUNT(*) FROM public.students
 UNION ALL
 SELECT 'teachers' AS table_name, COUNT(*) FROM public.teachers
