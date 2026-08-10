@@ -458,9 +458,9 @@ export const WhatsAppBirthdayManager: React.FC<WhatsAppBirthdayManagerProps> = (
                       </div>
 
                       {isSentToday ? (
-                        <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-extrabold text-xs px-3 py-2 rounded-xl flex items-center gap-1.5 shrink-0 shadow-sm">
+                        <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-extrabold text-xs px-3.5 py-2 rounded-xl flex items-center gap-1.5 shrink-0 shadow-sm">
                           <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                          <span>Sent Today ✓</span>
+                          <span>Sent ✓</span>
                         </div>
                       ) : (
                         <button
