@@ -704,7 +704,7 @@ export const Dashboard: React.FC = () => {
         {/* ─── TAB 2: TC MANAGER ─── */}
         {activeTab === "tc" && (
           <div className="space-y-8 relative">
-            
+
             {/* Top Action Header Banner */}
             <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
@@ -1054,7 +1054,7 @@ export const Dashboard: React.FC = () => {
         {/* ─── TAB 3: TEACHERS & BIRTHDAYS ─── */}
         {activeTab === "teachers" && (
           <div className="space-y-8 relative">
-            
+
             {/* Top Action Header Banner */}
             <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
@@ -1173,7 +1173,7 @@ export const Dashboard: React.FC = () => {
         {/* ─── TAB 4: STUDENTS & BIRTHDAYS ─── */}
         {activeTab === "students" && (
           <div className="space-y-8 relative">
-            
+
             {/* Top Action Header Banner */}
             <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
@@ -1538,7 +1538,7 @@ export const Dashboard: React.FC = () => {
         {/* ─── TAB 6: TRANSPORTATION ─── */}
         {activeTab === "transport" && (
           <div className="space-y-8 relative">
-            
+
             {/* Top Action Header Banner */}
             <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
@@ -2517,7 +2517,7 @@ export const Dashboard: React.FC = () => {
         {/* ─── NEW MODULE 1: DAILY ATTENDANCE ─── */}
         {activeTab === "attendance" && (
           <div className="space-y-8">
-            
+
             {/* Top Action Header Banner */}
             <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
@@ -2536,7 +2536,7 @@ export const Dashboard: React.FC = () => {
                 {/* Locked Date Badge */}
                 <div className="px-4 py-2 bg-slate-950 border border-amber-500/30 rounded-2xl flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                  <span className="text-xs font-bold text-slate-400">Date (Locked):</span>
+                  <span className="text-xs font-bold text-slate-400">Date:</span>
                   <span className="text-xs font-bold text-amber-400 font-mono">
                     Today ({new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })})
                   </span>
@@ -2553,9 +2553,6 @@ export const Dashboard: React.FC = () => {
                       "Class Nursery", "Class LKG", "Class UKG", "Class I", "Class II", "Class III", "Class IV", "Class V", "Class VI", "Class VII", "Class VIII", "Class IX", "Class X", "Class XI", "Class XII"
                     ].length} Classes)
                   </h4>
-                  <span className="text-xs font-bold text-slate-400">
-                    Click "Mark Attendance" or "View Attendance" for any class
-                  </span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
@@ -2634,7 +2631,7 @@ export const Dashboard: React.FC = () => {
             ) : (
               /* CASE 2: SELECTED CLASS ROSTER VIEW & CLASS OVERVIEW BANNER */
               <div className="space-y-6">
-                
+
                 {/* Back button & Class Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <button
@@ -2648,21 +2645,19 @@ export const Dashboard: React.FC = () => {
                     <div className="p-1 bg-slate-950 border border-slate-800 rounded-2xl flex">
                       <button
                         onClick={() => setAttendanceMode("mark")}
-                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                          attendanceMode === "mark"
-                            ? "bg-amber-500 text-slate-950 shadow-md font-extrabold"
-                            : "text-slate-400 hover:text-white"
-                        }`}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${attendanceMode === "mark"
+                          ? "bg-amber-500 text-slate-950 shadow-md font-extrabold"
+                          : "text-slate-400 hover:text-white"
+                          }`}
                       >
                         ✍️ Mark Roster
                       </button>
                       <button
                         onClick={() => setAttendanceMode("view")}
-                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                          attendanceMode === "view"
-                            ? "bg-amber-500 text-slate-950 shadow-md font-extrabold"
-                            : "text-slate-400 hover:text-white"
-                        }`}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${attendanceMode === "view"
+                          ? "bg-amber-500 text-slate-950 shadow-md font-extrabold"
+                          : "text-slate-400 hover:text-white"
+                          }`}
                       >
                         👁️ Class Summary
                       </button>
@@ -2833,9 +2828,8 @@ export const Dashboard: React.FC = () => {
                                       <p className="text-xs text-emerald-400 font-mono">Parent: {s.parent_mobile || s.whatsapp_no}</p>
                                     )}
                                   </div>
-                                  <span className={`px-3 py-1 rounded-xl text-xs font-bold ${
-                                    attendanceMap[s.id] === "Absent" ? "bg-rose-500/20 text-rose-400 border border-rose-500/30" : "bg-blue-500/20 text-blue-400 border border-blue-500/30"
-                                  }`}>
+                                  <span className={`px-3 py-1 rounded-xl text-xs font-bold ${attendanceMap[s.id] === "Absent" ? "bg-rose-500/20 text-rose-400 border border-rose-500/30" : "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                                    }`}>
                                     {attendanceMap[s.id]}
                                   </span>
                                 </div>
@@ -3115,11 +3109,10 @@ export const Dashboard: React.FC = () => {
                   <div
                     key={item.role}
                     onClick={() => setActiveRole(item.role as any)}
-                    className={`p-5 rounded-2xl border cursor-pointer transition-all ${
-                      activeRole === item.role
-                        ? "bg-amber-500/10 border-amber-500 text-amber-400 shadow-xl"
-                        : "bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700"
-                    }`}
+                    className={`p-5 rounded-2xl border cursor-pointer transition-all ${activeRole === item.role
+                      ? "bg-amber-500/10 border-amber-500 text-amber-400 shadow-xl"
+                      : "bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700"
+                      }`}
                   >
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="font-bold text-white text-sm">{item.title}</h4>
