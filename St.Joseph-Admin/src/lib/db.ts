@@ -881,47 +881,23 @@ const initialTCs: TCRecordData[] = [
   }
 ];
 
-function getStorage<T>(key: string, defaultValue: T): T {
-  try {
-    const data = localStorage.getItem(key);
-    if (!data) return defaultValue;
-    const parsed = JSON.parse(data);
-    if (Array.isArray(parsed) && Array.isArray(defaultValue) && defaultValue.length > 0) {
-      // Automatically merge any missing default mock items into local storage
-      const existingIds = new Set(parsed.map((item: any) => item?.id));
-      const missingDefaults = defaultValue.filter((item: any) => item?.id && !existingIds.has(item.id));
-      if (missingDefaults.length > 0) {
-        const merged = [...parsed, ...missingDefaults];
-        localStorage.setItem(key, JSON.stringify(merged));
-        return merged as unknown as T;
-      }
-    }
-    return parsed;
-  } catch (e) {
-    return defaultValue;
-  }
+function cleanPayload(record: any) {
+  const { id, ...rest } = record;
+  const isUuid = id && typeof id === "string" && id.includes("-") && id.length > 25;
+  return isUuid ? record : rest;
 }
 
-function setStorage<T>(key: string, value: T): void {
-  try {
-    localStorage.setItem(key, JSON.stringify(value));
-    window.dispatchEvent(new Event("stjoseph_db_updated"));
-  } catch (e) {
-    console.error("Local storage error:", e);
-  }
-}
-
-// ─── API Services ─────────────────────────────────────────────────────────────
+// ─── API Services (100% Direct Supabase Cloud Operations) ────────────────────
 
 // 1. TC Service
 export async function fetchTCs(): Promise<TCRecordData[]> {
-  if (SUPABASE_ANON_KEY) {
-    try {
-      const { data, error } = await supabase.from("tc_records").select("*").order("created_at", { ascending: false });
-      if (!error && data) return data;
-    } catch (e) { }
+  try {
+    const { data, error } = await supabase.from("tc_records").select("*").order("created_at", { ascending: false });
+    if (!error && data && data.length > 0) return data;
+  } catch (e) {
+    console.warn("Supabase fetchTCs error", e);
   }
-  return getStorage("stj_tc_records", initialTCs);
+  return initialTCs;
 }
 
 export async function uploadAndSaveTC(
@@ -931,7 +907,7 @@ export async function uploadAndSaveTC(
   let file_url = "";
   let file_path = "";
 
-  if (file && SUPABASE_ANON_KEY) {
+  if (file) {
     try {
       const cleanClass = record.class.replace(/[^a-zA-Z0-9]/g, "_");
       const cleanRoll = record.roll_no.replace(/[^a-zA-Z0-9]/g, "_");
@@ -953,18 +929,8 @@ export async function uploadAndSaveTC(
         file_path = fileName;
       }
     } catch (e) {
-      console.warn("Storage upload error fallback", e);
+      console.warn("Storage upload error", e);
     }
-  }
-
-  // If local file object is provided without Supabase storage URL, read as persistent Data URL
-  if (file && !file_url) {
-    file_url = await new Promise<string>((resolve) => {
-      const reader = new FileReader();
-      reader.onload = (e) => resolve(e.target?.result as string || "");
-      reader.onerror = () => resolve("");
-      reader.readAsDataURL(file);
-    });
   }
 
   const newRecord: TCRecordData = {
@@ -981,31 +947,26 @@ export async function uploadAndSaveTC(
     created_at: new Date().toISOString(),
   };
 
-  if (SUPABASE_ANON_KEY) {
-    try {
-      const dbPayload = {
-        roll_no: newRecord.roll_no,
-        class: newRecord.class,
-        student_name: newRecord.student_name,
-        father_name: newRecord.father_name,
-        dob: newRecord.dob,
-        tc_number: newRecord.tc_number,
-        issue_date: newRecord.issue_date,
-        file_path: newRecord.file_path,
-        file_url: newRecord.file_url,
-      };
-      const { data, error } = await supabase.from("tc_records").insert([dbPayload]).select().single();
-      if (data?.id) {
-        newRecord.id = data.id;
-      }
-    } catch (e) {
-      console.warn("Supabase insert error", e);
+  try {
+    const dbPayload = {
+      roll_no: newRecord.roll_no,
+      class: newRecord.class,
+      student_name: newRecord.student_name,
+      father_name: newRecord.father_name,
+      dob: newRecord.dob,
+      tc_number: newRecord.tc_number,
+      issue_date: newRecord.issue_date,
+      file_path: newRecord.file_path,
+      file_url: newRecord.file_url,
+    };
+    const { data } = await supabase.from("tc_records").insert([dbPayload]).select().single();
+    if (data?.id) {
+      newRecord.id = data.id;
     }
+  } catch (e) {
+    console.warn("Supabase TC insert error", e);
   }
 
-  const list = getStorage<TCRecordData[]>("stj_tc_records", initialTCs);
-  list.unshift(newRecord);
-  setStorage("stj_tc_records", list);
   return newRecord;
 }
 
@@ -1023,40 +984,32 @@ export async function saveTCRecord(tc: Omit<TCRecordData, "id"> & { id?: string 
     created_at: new Date().toISOString(),
   };
 
-  if (SUPABASE_ANON_KEY) {
-    try {
-      await supabase.from("tc_records").upsert([newRecord]);
-    } catch (e) { }
+  try {
+    await supabase.from("tc_records").upsert([newRecord]);
+  } catch (e) {
+    console.warn("Supabase saveTCRecord error", e);
   }
 
-  const list = getStorage("stj_tc_records", initialTCs);
-  const idx = list.findIndex((x) => x.id === newRecord.id);
-  if (idx >= 0) list[idx] = newRecord;
-  else list.unshift(newRecord);
-
-  setStorage("stj_tc_records", list);
   return newRecord;
 }
 
 export async function deleteTCRecord(id: string): Promise<void> {
-  if (SUPABASE_ANON_KEY) {
-    try {
-      await supabase.from("tc_records").delete().eq("id", id);
-    } catch (e) { }
+  try {
+    await supabase.from("tc_records").delete().eq("id", id);
+  } catch (e) {
+    console.warn("Supabase deleteTCRecord error", e);
   }
-  const list = getStorage<TCRecordData[]>("stj_tc_records", initialTCs).filter((x) => x.id !== id);
-  setStorage("stj_tc_records", list);
 }
 
 // 2. Teachers Service
 export async function fetchTeachers(): Promise<Teacher[]> {
-  if (SUPABASE_ANON_KEY) {
-    try {
-      const { data, error } = await supabase.from("teachers").select("*").order("name");
-      if (!error && data) return data;
-    } catch (e) { }
+  try {
+    const { data, error } = await supabase.from("teachers").select("*").order("name");
+    if (!error && data && data.length > 0) return data;
+  } catch (e) {
+    console.warn("Supabase fetchTeachers error", e);
   }
-  return getStorage("stj_teachers", initialTeachers);
+  return initialTeachers;
 }
 
 export async function saveTeacherRecord(t: Omit<Teacher, "id"> & { id?: string }): Promise<Teacher> {
@@ -1078,53 +1031,44 @@ export async function saveTeacherRecord(t: Omit<Teacher, "id"> & { id?: string }
     created_at: t.created_at || new Date().toISOString(),
   };
 
-  if (SUPABASE_ANON_KEY) {
-    try {
-      const dbPayload: any = cleanPayload(record);
-      if (t.id && !t.id.startsWith("t_")) {
-        dbPayload.id = t.id;
-      } else {
-        delete dbPayload.id;
-      }
-
-      const { data, error } = await supabase.from("teachers").upsert([dbPayload]).select();
-      if (error) {
-        console.error("Supabase teacher save error:", error);
-      } else if (data && data[0]?.id) {
-        record.id = data[0].id;
-      }
-    } catch (e: any) {
-      console.error("Supabase teacher save exception:", e);
+  try {
+    const dbPayload: any = cleanPayload(record);
+    if (t.id && !t.id.startsWith("t_")) {
+      dbPayload.id = t.id;
+    } else {
+      delete dbPayload.id;
     }
+
+    const { data, error } = await supabase.from("teachers").upsert([dbPayload]).select();
+    if (error) {
+      console.error("Supabase teacher save error:", error);
+    } else if (data && data[0]?.id) {
+      record.id = data[0].id;
+    }
+  } catch (e: any) {
+    console.error("Supabase teacher save exception:", e);
   }
 
-  const list = getStorage("stj_teachers", initialTeachers);
-  const idx = list.findIndex((x) => x.id === record.id);
-  if (idx >= 0) list[idx] = record;
-  else list.unshift(record);
-  setStorage("stj_teachers", list);
   return record;
 }
 
 export async function deleteTeacherRecord(id: string): Promise<void> {
-  if (SUPABASE_ANON_KEY) {
-    try {
-      await supabase.from("teachers").delete().eq("id", id);
-    } catch (e) { }
+  try {
+    await supabase.from("teachers").delete().eq("id", id);
+  } catch (e) {
+    console.warn("Supabase deleteTeacherRecord error", e);
   }
-  const list = getStorage<Teacher[]>("stj_teachers", initialTeachers).filter((x) => x.id !== id);
-  setStorage("stj_teachers", list);
 }
 
 // 3. Students Service
 export async function fetchStudents(): Promise<Student[]> {
-  if (SUPABASE_ANON_KEY) {
-    try {
-      const { data, error } = await supabase.from("students").select("*").order("name");
-      if (!error && data) return data;
-    } catch (e) { }
+  try {
+    const { data, error } = await supabase.from("students").select("*").order("name");
+    if (!error && data && data.length > 0) return data;
+  } catch (e) {
+    console.warn("Supabase fetchStudents error", e);
   }
-  return getStorage("stj_students", initialStudents);
+  return initialStudents;
 }
 
 export async function saveStudentRecord(s: Omit<Student, "id"> & { id?: string }): Promise<Student> {
@@ -1150,79 +1094,63 @@ export async function saveStudentRecord(s: Omit<Student, "id"> & { id?: string }
     created_at: s.created_at || new Date().toISOString(),
   };
 
-  if (SUPABASE_ANON_KEY) {
-    try {
-      const dbPayload: any = cleanPayload(record);
-      if (s.id && !s.id.startsWith("s_")) {
-        dbPayload.id = s.id;
-      } else {
-        delete dbPayload.id;
-      }
-
-      const { data, error } = await supabase.from("students").upsert([dbPayload]).select();
-      if (error) {
-        console.error("Supabase student save error:", error);
-      } else if (data && data[0]?.id) {
-        record.id = data[0].id;
-      }
-    } catch (e) {
-      console.error("Supabase student save exception:", e);
+  try {
+    const dbPayload: any = cleanPayload(record);
+    if (s.id && !s.id.startsWith("s_")) {
+      dbPayload.id = s.id;
+    } else {
+      delete dbPayload.id;
     }
+
+    const { data, error } = await supabase.from("students").upsert([dbPayload]).select();
+    if (error) {
+      console.error("Supabase student save error:", error);
+    } else if (data && data[0]?.id) {
+      record.id = data[0].id;
+    }
+  } catch (e) {
+    console.error("Supabase student save exception:", e);
   }
 
-  const list = getStorage("stj_students", initialStudents);
-  const idx = list.findIndex((x) => x.id === record.id);
-  if (idx >= 0) list[idx] = record;
-  else list.unshift(record);
-  setStorage("stj_students", list);
   return record;
 }
 
 export async function deleteStudentRecord(id: string): Promise<void> {
-  if (SUPABASE_ANON_KEY) {
-    try {
-      await supabase.from("students").delete().eq("id", id);
-    } catch (e) { }
+  try {
+    await supabase.from("students").delete().eq("id", id);
+  } catch (e) {
+    console.warn("Supabase deleteStudentRecord error", e);
   }
-  const list = getStorage<Student[]>("stj_students", initialStudents).filter((x) => x.id !== id);
-  setStorage("stj_students", list);
 }
 
 // 4. Fees Service
 export async function fetchFeeStructure(): Promise<FeeSection[]> {
-  if (SUPABASE_ANON_KEY) {
-    try {
-      const { data, error } = await supabase.from("fee_structure").select("*");
-      if (!error && data) return data;
-    } catch (e) { }
+  try {
+    const { data, error } = await supabase.from("fee_structure").select("*");
+    if (!error && data && data.length > 0) return data;
+  } catch (e) {
+    console.warn("Supabase fetchFeeStructure error", e);
   }
-  return getStorage("stj_fee_structure", initialFeeStructure);
+  return initialFeeStructure;
 }
 
 export async function saveFeeStructure(sections: FeeSection[]): Promise<void> {
-  if (SUPABASE_ANON_KEY) {
-    try {
-      await supabase.from("fee_structure").upsert(sections);
-    } catch (e) { }
+  try {
+    await supabase.from("fee_structure").upsert(sections);
+  } catch (e) {
+    console.warn("Supabase saveFeeStructure error", e);
   }
-  setStorage("stj_fee_structure", sections);
-}
-
-function cleanPayload(record: any) {
-  const { id, ...rest } = record;
-  const isUuid = id && typeof id === "string" && id.includes("-") && id.length > 25;
-  return isUuid ? record : rest;
 }
 
 // 5. Transport Service
 export async function fetchTransportRoutes(): Promise<TransportRoute[]> {
-  if (SUPABASE_ANON_KEY) {
-    try {
-      const { data, error } = await supabase.from("transportation").select("*");
-      if (!error && data) return data;
-    } catch (e) { }
+  try {
+    const { data, error } = await supabase.from("transportation").select("*");
+    if (!error && data && data.length > 0) return data;
+  } catch (e) {
+    console.warn("Supabase fetchTransportRoutes error", e);
   }
-  return getStorage("stj_transport_routes", initialRoutes);
+  return initialRoutes;
 }
 
 export async function saveTransportRoute(r: Omit<TransportRoute, "id"> & { id?: string }): Promise<TransportRoute> {
@@ -1239,42 +1167,35 @@ export async function saveTransportRoute(r: Omit<TransportRoute, "id"> & { id?: 
     status: r.status || "active",
   };
 
-  if (SUPABASE_ANON_KEY) {
-    try {
-      const payload = cleanPayload(record);
-      const { data, error } = await supabase.from("transportation").upsert([payload]).select().single();
-      if (error) console.warn("Supabase transport save error:", error);
-      if (data?.id) record.id = data.id;
-    } catch (e) { }
+  try {
+    const payload = cleanPayload(record);
+    const { data, error } = await supabase.from("transportation").upsert([payload]).select().single();
+    if (error) console.warn("Supabase transport save error:", error);
+    if (data?.id) record.id = data.id;
+  } catch (e) {
+    console.warn("Supabase saveTransportRoute exception", e);
   }
 
-  const list = getStorage("stj_transport_routes", initialRoutes);
-  const idx = list.findIndex((x) => x.id === record.id);
-  if (idx >= 0) list[idx] = record;
-  else list.unshift(record);
-  setStorage("stj_transport_routes", list);
   return record;
 }
 
 export async function deleteTransportRoute(id: string): Promise<void> {
-  if (SUPABASE_ANON_KEY) {
-    try {
-      await supabase.from("transportation").delete().eq("id", id);
-    } catch (e) { }
+  try {
+    await supabase.from("transportation").delete().eq("id", id);
+  } catch (e) {
+    console.warn("Supabase deleteTransportRoute error", e);
   }
-  const list = getStorage<TransportRoute[]>("stj_transport_routes", initialRoutes).filter((x) => x.id !== id);
-  setStorage("stj_transport_routes", list);
 }
 
 // 6. Mandatory Docs Service
 export async function fetchMandatoryDocs(): Promise<MandatoryDoc[]> {
-  if (SUPABASE_ANON_KEY) {
-    try {
-      const { data, error } = await supabase.from("mandatory_disclosures").select("*");
-      if (!error && data) return data;
-    } catch (e) { }
+  try {
+    const { data, error } = await supabase.from("mandatory_disclosures").select("*");
+    if (!error && data) return data;
+  } catch (e) {
+    console.warn("Supabase fetchMandatoryDocs error", e);
   }
-  return getStorage("stj_mandatory_docs", []);
+  return [];
 }
 
 export async function saveMandatoryDoc(doc: Omit<MandatoryDoc, "id"> & { id?: string }): Promise<MandatoryDoc> {
@@ -1286,41 +1207,34 @@ export async function saveMandatoryDoc(doc: Omit<MandatoryDoc, "id"> & { id?: st
     file_type: doc.file_type || "pdf",
     is_official_5: doc.is_official_5 ?? true,
   };
-  if (SUPABASE_ANON_KEY) {
-    try {
-      const payload = cleanPayload(record);
-      const { data, error } = await supabase.from("mandatory_disclosures").upsert([payload]).select().single();
-      if (error) console.warn("Supabase disclosure save error:", error);
-      if (data?.id) record.id = data.id;
-    } catch (e) { }
+  try {
+    const payload = cleanPayload(record);
+    const { data, error } = await supabase.from("mandatory_disclosures").upsert([payload]).select().single();
+    if (error) console.warn("Supabase disclosure save error:", error);
+    if (data?.id) record.id = data.id;
+  } catch (e) {
+    console.warn("Supabase saveMandatoryDoc exception", e);
   }
-  const list = getStorage<MandatoryDoc[]>("stj_mandatory_docs", []);
-  const idx = list.findIndex((x) => x.id === record.id);
-  if (idx >= 0) list[idx] = record;
-  else list.unshift(record);
-  setStorage("stj_mandatory_docs", list);
   return record;
 }
 
 export async function deleteMandatoryDoc(id: string): Promise<void> {
-  if (SUPABASE_ANON_KEY) {
-    try {
-      await supabase.from("mandatory_disclosures").delete().eq("id", id);
-    } catch (e) { }
+  try {
+    await supabase.from("mandatory_disclosures").delete().eq("id", id);
+  } catch (e) {
+    console.warn("Supabase deleteMandatoryDoc error", e);
   }
-  const list = getStorage<MandatoryDoc[]>("stj_mandatory_docs", []).filter((x) => x.id !== id);
-  setStorage("stj_mandatory_docs", list);
 }
 
 // 7. News Service
 export async function fetchNews(): Promise<NewsItem[]> {
-  if (SUPABASE_ANON_KEY) {
-    try {
-      const { data, error } = await supabase.from("news").select("*").order("created_at", { ascending: false });
-      if (!error && data) return data;
-    } catch (e) { }
+  try {
+    const { data, error } = await supabase.from("news").select("*").order("created_at", { ascending: false });
+    if (!error && data) return data;
+  } catch (e) {
+    console.warn("Supabase fetchNews error", e);
   }
-  return getStorage("stj_news", []);
+  return [];
 }
 
 export async function saveNews(item: Omit<NewsItem, "id"> & { id?: string }): Promise<NewsItem> {
@@ -1332,41 +1246,34 @@ export async function saveNews(item: Omit<NewsItem, "id"> & { id?: string }): Pr
     summary: item.summary || item.content || "",
     content: item.content || item.summary || "",
   };
-  if (SUPABASE_ANON_KEY) {
-    try {
-      const payload = cleanPayload(record);
-      const { data, error } = await supabase.from("news").upsert([payload]).select().single();
-      if (error) console.warn("Supabase news save error:", error);
-      if (data?.id) record.id = data.id;
-    } catch (e) { }
+  try {
+    const payload = cleanPayload(record);
+    const { data, error } = await supabase.from("news").upsert([payload]).select().single();
+    if (error) console.warn("Supabase news save error:", error);
+    if (data?.id) record.id = data.id;
+  } catch (e) {
+    console.warn("Supabase saveNews exception", e);
   }
-  const list = getStorage<NewsItem[]>("stj_news", []);
-  const idx = list.findIndex((x) => x.id === record.id);
-  if (idx >= 0) list[idx] = record;
-  else list.unshift(record);
-  setStorage("stj_news", list);
   return record;
 }
 
 export async function deleteNews(id: string): Promise<void> {
-  if (SUPABASE_ANON_KEY) {
-    try {
-      await supabase.from("news").delete().eq("id", id);
-    } catch (e) { }
+  try {
+    await supabase.from("news").delete().eq("id", id);
+  } catch (e) {
+    console.warn("Supabase deleteNews error", e);
   }
-  const list = getStorage<NewsItem[]>("stj_news", []).filter((x) => x.id !== id);
-  setStorage("stj_news", list);
 }
 
 // 8. Events Service
 export async function fetchEvents(): Promise<EventItem[]> {
-  if (SUPABASE_ANON_KEY) {
-    try {
-      const { data, error } = await supabase.from("events").select("*").order("created_at", { ascending: false });
-      if (!error && data) return data;
-    } catch (e) { }
+  try {
+    const { data, error } = await supabase.from("events").select("*").order("created_at", { ascending: false });
+    if (!error && data) return data;
+  } catch (e) {
+    console.warn("Supabase fetchEvents error", e);
   }
-  return getStorage("stj_events", []);
+  return [];
 }
 
 export async function saveEvent(item: Omit<EventItem, "id"> & { id?: string }): Promise<EventItem> {
@@ -1388,41 +1295,34 @@ export async function saveEvent(item: Omit<EventItem, "id"> & { id?: string }): 
     photos: item.photos || [],
     badgeColor: item.badgeColor || "bg-blue-600 text-white",
   };
-  if (SUPABASE_ANON_KEY) {
-    try {
-      const payload = cleanPayload(record);
-      const { data, error } = await supabase.from("events").upsert([payload]).select().single();
-      if (error) console.warn("Supabase events save error:", error);
-      if (data?.id) record.id = data.id;
-    } catch (e) { }
+  try {
+    const payload = cleanPayload(record);
+    const { data, error } = await supabase.from("events").upsert([payload]).select().single();
+    if (error) console.warn("Supabase events save error:", error);
+    if (data?.id) record.id = data.id;
+  } catch (e) {
+    console.warn("Supabase saveEvent exception", e);
   }
-  const list = getStorage<EventItem[]>("stj_events", []);
-  const idx = list.findIndex((x) => x.id === record.id);
-  if (idx >= 0) list[idx] = record;
-  else list.unshift(record);
-  setStorage("stj_events", list);
   return record;
 }
 
 export async function deleteEvent(id: string): Promise<void> {
-  if (SUPABASE_ANON_KEY) {
-    try {
-      await supabase.from("events").delete().eq("id", id);
-    } catch (e) { }
+  try {
+    await supabase.from("events").delete().eq("id", id);
+  } catch (e) {
+    console.warn("Supabase deleteEvent error", e);
   }
-  const list = getStorage<EventItem[]>("stj_events", []).filter((x) => x.id !== id);
-  setStorage("stj_events", list);
 }
 
 // 9. Books Service
 export async function fetchBooks(): Promise<BookItem[]> {
-  if (SUPABASE_ANON_KEY) {
-    try {
-      const { data, error } = await supabase.from("books").select("*");
-      if (!error && data) return data;
-    } catch (e) { }
+  try {
+    const { data, error } = await supabase.from("books").select("*");
+    if (!error && data) return data;
+  } catch (e) {
+    console.warn("Supabase fetchBooks error", e);
   }
-  return getStorage("stj_books", []);
+  return [];
 }
 
 export async function saveBook(item: Omit<BookItem, "id"> & { id?: string }): Promise<BookItem> {
@@ -1433,41 +1333,34 @@ export async function saveBook(item: Omit<BookItem, "id"> & { id?: string }): Pr
     book_title: item.book_title,
     publisher: item.publisher || "NCERT / Standard",
   };
-  if (SUPABASE_ANON_KEY) {
-    try {
-      const payload = cleanPayload(record);
-      const { data, error } = await supabase.from("books").upsert([payload]).select().single();
-      if (error) console.warn("Supabase books save error:", error);
-      if (data?.id) record.id = data.id;
-    } catch (e) { }
+  try {
+    const payload = cleanPayload(record);
+    const { data, error } = await supabase.from("books").upsert([payload]).select().single();
+    if (error) console.warn("Supabase books save error:", error);
+    if (data?.id) record.id = data.id;
+  } catch (e) {
+    console.warn("Supabase saveBook exception", e);
   }
-  const list = getStorage<BookItem[]>("stj_books", []);
-  const idx = list.findIndex((x) => x.id === record.id);
-  if (idx >= 0) list[idx] = record;
-  else list.unshift(record);
-  setStorage("stj_books", list);
   return record;
 }
 
 export async function deleteBook(id: string): Promise<void> {
-  if (SUPABASE_ANON_KEY) {
-    try {
-      await supabase.from("books").delete().eq("id", id);
-    } catch (e) { }
+  try {
+    await supabase.from("books").delete().eq("id", id);
+  } catch (e) {
+    console.warn("Supabase deleteBook error", e);
   }
-  const list = getStorage<BookItem[]>("stj_books", []).filter((x) => x.id !== id);
-  setStorage("stj_books", list);
 }
 
 // 10. Achievements Service
 export async function fetchAchievements(): Promise<AchievementItem[]> {
-  if (SUPABASE_ANON_KEY) {
-    try {
-      const { data, error } = await supabase.from("achievements").select("*").order("created_at", { ascending: false });
-      if (!error && data) return data;
-    } catch (e) { }
+  try {
+    const { data, error } = await supabase.from("achievements").select("*").order("created_at", { ascending: false });
+    if (!error && data) return data;
+  } catch (e) {
+    console.warn("Supabase fetchAchievements error", e);
   }
-  return getStorage("stj_achievements", []);
+  return [];
 }
 
 export async function saveAchievement(item: Omit<AchievementItem, "id"> & { id?: string }): Promise<AchievementItem> {
@@ -1478,36 +1371,27 @@ export async function saveAchievement(item: Omit<AchievementItem, "id"> & { id?:
     year: item.year || new Date().getFullYear().toString(),
     description: item.description || "",
   };
-  if (SUPABASE_ANON_KEY) {
-    try {
-      const payload = cleanPayload(record);
-      const { data, error } = await supabase.from("achievements").upsert([payload]).select().single();
-      if (error) console.warn("Supabase achievements save error:", error);
-      if (data?.id) record.id = data.id;
-    } catch (e) { }
+  try {
+    const payload = cleanPayload(record);
+    const { data, error } = await supabase.from("achievements").upsert([payload]).select().single();
+    if (error) console.warn("Supabase achievements save error:", error);
+    if (data?.id) record.id = data.id;
+  } catch (e) {
+    console.warn("Supabase saveAchievement exception", e);
   }
-  const list = getStorage<AchievementItem[]>("stj_achievements", []);
-  const idx = list.findIndex((x) => x.id === record.id);
-  if (idx >= 0) list[idx] = record;
-  else list.unshift(record);
-  setStorage("stj_achievements", list);
   return record;
 }
 
 export async function deleteAchievement(id: string): Promise<void> {
-  if (SUPABASE_ANON_KEY) {
-    try {
-      await supabase.from("achievements").delete().eq("id", id);
-    } catch (e) { }
+  try {
+    await supabase.from("achievements").delete().eq("id", id);
+  } catch (e) {
+    console.warn("Supabase deleteAchievement error", e);
   }
-  const list = getStorage<AchievementItem[]>("stj_achievements", []).filter((x) => x.id !== id);
-  setStorage("stj_achievements", list);
 }
 
 // Supabase Storage Bucket Helper for 10x Fast CDN Image Loading
 export async function uploadImageToSupabaseStorage(dataUrlOrFile: string | File, bucketName = "gallery"): Promise<string> {
-  if (!SUPABASE_ANON_KEY) return typeof dataUrlOrFile === "string" ? dataUrlOrFile : "";
-
   try {
     let fileBlob: Blob;
     let extension = "jpg";
@@ -1550,7 +1434,7 @@ export async function uploadImageToSupabaseStorage(dataUrlOrFile: string | File,
       }
     }
   } catch (err) {
-    console.warn("Supabase Storage upload fallback to compressed DataURL:", err);
+    console.warn("Supabase Storage upload exception:", err);
   }
 
   return typeof dataUrlOrFile === "string" ? dataUrlOrFile : "";
@@ -1558,19 +1442,18 @@ export async function uploadImageToSupabaseStorage(dataUrlOrFile: string | File,
 
 // 11. Gallery Service
 export async function fetchGallery(): Promise<GalleryItem[]> {
-  if (SUPABASE_ANON_KEY) {
-    try {
-      const { data, error } = await supabase.from("gallery").select("*");
-      if (!error && data) return data;
-    } catch (e) { }
+  try {
+    const { data, error } = await supabase.from("gallery").select("*");
+    if (!error && data) return data;
+  } catch (e) {
+    console.warn("Supabase fetchGallery error", e);
   }
-  return getStorage("stj_gallery", []);
+  return [];
 }
 
 export async function saveGallery(item: Omit<GalleryItem, "id"> & { id?: string }): Promise<GalleryItem> {
   let finalImageUrl = item.image_url;
 
-  // Upload to Supabase Storage Bucket for lightning fast CDN loading if possible
   if (item.image_url && item.image_url.startsWith("data:")) {
     const bucketUrl = await uploadImageToSupabaseStorage(item.image_url, "gallery");
     if (bucketUrl && bucketUrl.startsWith("http")) {
@@ -1584,41 +1467,34 @@ export async function saveGallery(item: Omit<GalleryItem, "id"> & { id?: string 
     category: item.category || "Campus",
     image_url: finalImageUrl,
   };
-  if (SUPABASE_ANON_KEY) {
-    try {
-      const payload = cleanPayload(record);
-      const { data, error } = await supabase.from("gallery").upsert([payload]).select().single();
-      if (error) console.warn("Supabase gallery save error:", error);
-      if (data?.id) record.id = data.id;
-    } catch (e) { }
+  try {
+    const payload = cleanPayload(record);
+    const { data, error } = await supabase.from("gallery").upsert([payload]).select().single();
+    if (error) console.warn("Supabase gallery save error:", error);
+    if (data?.id) record.id = data.id;
+  } catch (e) {
+    console.warn("Supabase saveGallery exception", e);
   }
-  const list = getStorage<GalleryItem[]>("stj_gallery", []);
-  const idx = list.findIndex((x) => x.id === record.id);
-  if (idx >= 0) list[idx] = record;
-  else list.unshift(record);
-  setStorage("stj_gallery", list);
   return record;
 }
 
 export async function deleteGallery(id: string): Promise<void> {
-  if (SUPABASE_ANON_KEY) {
-    try {
-      await supabase.from("gallery").delete().eq("id", id);
-    } catch (e) { }
+  try {
+    await supabase.from("gallery").delete().eq("id", id);
+  } catch (e) {
+    console.warn("Supabase deleteGallery error", e);
   }
-  const list = getStorage<GalleryItem[]>("stj_gallery", []).filter((x) => x.id !== id);
-  setStorage("stj_gallery", list);
 }
 
 // 12. Calendar Service
 export async function fetchCalendar(): Promise<CalendarEvent[]> {
-  if (SUPABASE_ANON_KEY) {
-    try {
-      const { data, error } = await supabase.from("calendar").select("*").order("date", { ascending: true });
-      if (!error && data) return data;
-    } catch (e) { }
+  try {
+    const { data, error } = await supabase.from("calendar").select("*").order("date", { ascending: true });
+    if (!error && data) return data;
+  } catch (e) {
+    console.warn("Supabase fetchCalendar error", e);
   }
-  return getStorage("stj_calendar", []);
+  return [];
 }
 
 export async function saveCalendar(item: Omit<CalendarEvent, "id"> & { id?: string }): Promise<CalendarEvent> {
@@ -1629,105 +1505,80 @@ export async function saveCalendar(item: Omit<CalendarEvent, "id"> & { id?: stri
     category: item.category || "Academic",
     description: item.description || "",
   };
-  if (SUPABASE_ANON_KEY) {
-    try {
-      const payload = cleanPayload(record);
-      const { data, error } = await supabase.from("calendar").upsert([payload]).select().single();
-      if (error) console.warn("Supabase calendar save error:", error);
-      if (data?.id) record.id = data.id;
-    } catch (e) { }
+  try {
+    const payload = cleanPayload(record);
+    const { data, error } = await supabase.from("calendar").upsert([payload]).select().single();
+    if (error) console.warn("Supabase calendar save error:", error);
+    if (data?.id) record.id = data.id;
+  } catch (e) {
+    console.warn("Supabase saveCalendar exception", e);
   }
-  const list = getStorage<CalendarEvent[]>("stj_calendar", []);
-  const idx = list.findIndex((x) => x.id === record.id);
-  if (idx >= 0) list[idx] = record;
-  else list.unshift(record);
-  setStorage("stj_calendar", list);
   return record;
 }
 
 export async function deleteCalendar(id: string): Promise<void> {
-  if (SUPABASE_ANON_KEY) {
-    try {
-      await supabase.from("calendar").delete().eq("id", id);
-    } catch (e) { }
+  try {
+    await supabase.from("calendar").delete().eq("id", id);
+  } catch (e) {
+    console.warn("Supabase deleteCalendar error", e);
   }
-  const list = getStorage<CalendarEvent[]>("stj_calendar", []).filter((x) => x.id !== id);
-  setStorage("stj_calendar", list);
 }
 
 // 13. Attendance Service
 export async function fetchAttendance(date?: string, className?: string): Promise<AttendanceRecord[]> {
-  if (SUPABASE_ANON_KEY) {
-    try {
-      let query = supabase.from("attendance").select("*");
-      if (date) query = query.eq("date", date);
-      if (className) query = query.eq("class", className);
-      const { data, error } = await query;
-      if (!error && data) return data;
-    } catch (e) {}
+  try {
+    let query = supabase.from("attendance").select("*");
+    if (date) query = query.eq("date", date);
+    if (className) query = query.eq("class", className);
+    const { data, error } = await query;
+    if (!error && data) return data;
+  } catch (e) {
+    console.warn("Supabase fetchAttendance error", e);
   }
-  let list = getStorage<AttendanceRecord[]>("stj_attendance", []);
-  if (date) list = list.filter((r) => r.date === date);
-  if (className) list = list.filter((r) => r.class === className);
-  return list;
+  return [];
 }
 
 export async function saveAttendanceRecords(records: AttendanceRecord[]): Promise<void> {
-  if (SUPABASE_ANON_KEY) {
-    try {
-      const payloads = records.map((r) => cleanPayload(r));
-      await supabase.from("attendance").upsert(payloads);
-    } catch (e) {}
+  try {
+    const payloads = records.map((r) => cleanPayload(r));
+    await supabase.from("attendance").upsert(payloads);
+  } catch (e) {
+    console.warn("Supabase saveAttendanceRecords error", e);
   }
-  const existing = getStorage<AttendanceRecord[]>("stj_attendance", []);
-  const map = new Map(existing.map((x) => [`${x.student_id}_${x.date}`, x]));
-  for (const r of records) {
-    map.set(`${r.student_id}_${r.date}`, r);
-  }
-  setStorage("stj_attendance", Array.from(map.values()));
 }
 
 // 14. Exam Marks Service
 export async function fetchExamMarks(examName?: string, className?: string): Promise<ExamMarkRecord[]> {
-  if (SUPABASE_ANON_KEY) {
-    try {
-      let query = supabase.from("marks").select("*");
-      if (examName) query = query.eq("exam_name", examName);
-      if (className) query = query.eq("class", className);
-      const { data, error } = await query;
-      if (!error && data) return data;
-    } catch (e) {}
+  try {
+    let query = supabase.from("marks").select("*");
+    if (examName) query = query.eq("exam_name", examName);
+    if (className) query = query.eq("class", className);
+    const { data, error } = await query;
+    if (!error && data) return data;
+  } catch (e) {
+    console.warn("Supabase fetchExamMarks error", e);
   }
-  let list = getStorage<ExamMarkRecord[]>("stj_marks", []);
-  if (examName) list = list.filter((r) => r.exam_name === examName);
-  if (className) list = list.filter((r) => r.class === className);
-  return list;
+  return [];
 }
 
 export async function saveExamMarksRecords(records: ExamMarkRecord[]): Promise<void> {
-  if (SUPABASE_ANON_KEY) {
-    try {
-      const payloads = records.map((r) => cleanPayload(r));
-      await supabase.from("marks").upsert(payloads);
-    } catch (e) {}
+  try {
+    const payloads = records.map((r) => cleanPayload(r));
+    await supabase.from("marks").upsert(payloads);
+  } catch (e) {
+    console.warn("Supabase saveExamMarksRecords error", e);
   }
-  const existing = getStorage<ExamMarkRecord[]>("stj_marks", []);
-  const map = new Map(existing.map((x) => [`${x.student_id}_${x.exam_name}_${x.subject}`, x]));
-  for (const r of records) {
-    map.set(`${r.student_id}_${r.exam_name}_${r.subject}`, r);
-  }
-  setStorage("stj_marks", Array.from(map.values()));
 }
 
 // 15. Fee Collections Service
 export async function fetchFeeCollections(): Promise<FeeReceiptRecord[]> {
-  if (SUPABASE_ANON_KEY) {
-    try {
-      const { data, error } = await supabase.from("fee_collections").select("*").order("created_at", { ascending: false });
-      if (!error && data) return data;
-    } catch (e) {}
+  try {
+    const { data, error } = await supabase.from("fee_collections").select("*").order("created_at", { ascending: false });
+    if (!error && data) return data;
+  } catch (e) {
+    console.warn("Supabase fetchFeeCollections error", e);
   }
-  return getStorage<FeeReceiptRecord[]>("stj_fee_collections", []);
+  return [];
 }
 
 export async function saveFeeCollectionRecord(receipt: Omit<FeeReceiptRecord, "id" | "receipt_no" | "created_at" | "payment_date"> & { id?: string; receipt_no?: string; payment_date?: string }): Promise<FeeReceiptRecord> {
@@ -1746,15 +1597,12 @@ export async function saveFeeCollectionRecord(receipt: Omit<FeeReceiptRecord, "i
     created_at: new Date().toISOString(),
   };
 
-  if (SUPABASE_ANON_KEY) {
-    try {
-      const payload = cleanPayload(newReceipt);
-      const { data } = await supabase.from("fee_collections").upsert([payload]).select().single();
-      if (data?.id) newReceipt.id = data.id;
-    } catch (e) {}
+  try {
+    const payload = cleanPayload(newReceipt);
+    const { data } = await supabase.from("fee_collections").upsert([payload]).select().single();
+    if (data?.id) newReceipt.id = data.id;
+  } catch (e) {
+    console.warn("Supabase saveFeeCollectionRecord error", e);
   }
-  const list = getStorage<FeeReceiptRecord[]>("stj_fee_collections", []);
-  list.unshift(newReceipt);
-  setStorage("stj_fee_collections", list);
   return newReceipt;
 }

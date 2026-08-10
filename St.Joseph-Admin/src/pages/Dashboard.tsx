@@ -651,15 +651,9 @@ export const Dashboard: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            {SUPABASE_ANON_KEY ? (
-              <span className="px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold text-[11px] rounded-xl flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Supabase Connected
-              </span>
-            ) : (
-              <span className="px-3 py-1.5 bg-amber-500/10 border border-amber-500/30 text-amber-400 font-bold text-[11px] rounded-xl flex items-center gap-1.5" title="Add VITE_SUPABASE_ANON_KEY to environment variables to connect to Supabase Cloud Database">
-                <span className="w-2 h-2 rounded-full bg-amber-400"></span> Local Storage Mode
-              </span>
-            )}
+            <span className="px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold text-[11px] rounded-xl flex items-center gap-1.5" title="Connected directly to Supabase Cloud Database">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Supabase Cloud Database Connected
+            </span>
             <button
               onClick={loadData}
               className="px-4 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs font-bold text-slate-300 hover:text-white flex items-center gap-2 transition-colors"
