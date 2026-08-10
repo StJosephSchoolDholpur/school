@@ -29,7 +29,6 @@ export type AdminTab =
   | "tc"
   | "teachers"
   | "students"
-  | "whatsapp_birthdays"
   | "fees"
   | "transport"
   | "mandatory"
@@ -57,7 +56,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
     { id: "tc", label: "TC Portal Manager", icon: FileCheck2 },
     { id: "teachers", label: "Teachers", icon: GraduationCap },
     { id: "students", label: "Students", icon: Users },
-    { id: "whatsapp_birthdays", label: "WhatsApp Dashboard", icon: MessageSquare },
     { id: "fees", label: "Fee Structure", icon: IndianRupee },
     { id: "transport", label: "Transportation Routes", icon: Bus },
     { id: "mandatory", label: "Mandatory Disclosure", icon: ShieldCheck },

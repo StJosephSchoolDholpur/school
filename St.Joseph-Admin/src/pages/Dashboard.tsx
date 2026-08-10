@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Sidebar, AdminTab } from "../components/Sidebar";
-import { WhatsAppBirthdayManager } from "../components/WhatsAppBirthdayManager";
 import { StudentAdmissionModal } from "../components/StudentAdmissionModal";
 import { TeacherRegistrationModal } from "../components/TeacherRegistrationModal";
 import {
@@ -3120,10 +3119,7 @@ export const Dashboard: React.FC = () => {
           </div>
         )}
 
-        {/* WHATSAPP BIRTHDAY NOTIFICATION ENGINE MODULE */}
-        {activeTab === "whatsapp_birthdays" && (
-          <WhatsAppBirthdayManager students={students} onRefreshData={loadData} />
-        )}
+
 
         {/* ─── PRINT MODAL 1: REPORT CARD MARKSHEET MODAL ─── */}
         {reportCardStudent && (
