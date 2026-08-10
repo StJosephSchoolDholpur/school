@@ -884,7 +884,19 @@ const initialTCs: TCRecordData[] = [
 function getStorage<T>(key: string, defaultValue: T): T {
   try {
     const data = localStorage.getItem(key);
-    return data ? JSON.parse(data) : defaultValue;
+    if (!data) return defaultValue;
+    const parsed = JSON.parse(data);
+    if (Array.isArray(parsed) && Array.isArray(defaultValue) && defaultValue.length > 0) {
+      // Automatically merge any missing default mock items into local storage
+      const existingIds = new Set(parsed.map((item: any) => item?.id));
+      const missingDefaults = defaultValue.filter((item: any) => item?.id && !existingIds.has(item.id));
+      if (missingDefaults.length > 0) {
+        const merged = [...parsed, ...missingDefaults];
+        localStorage.setItem(key, JSON.stringify(merged));
+        return merged as unknown as T;
+      }
+    }
+    return parsed;
   } catch (e) {
     return defaultValue;
   }
