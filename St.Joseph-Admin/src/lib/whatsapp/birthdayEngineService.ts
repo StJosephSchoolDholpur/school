@@ -420,22 +420,12 @@ export async function fetchNotificationTemplates(): Promise<NotificationTemplate
     } catch {}
   }
 
-  if (list.length === 0) {
-    list = getStorage(LOCAL_TEMPLATES_KEY, defaultTemplates);
-  }
-
   // Ensure all 16 default templates exist in the list
   const existingIds = new Set(list.map((t) => t.id));
-  let updated = false;
   for (const defTpl of defaultTemplates) {
     if (!existingIds.has(defTpl.id)) {
       list.push(defTpl);
-      updated = true;
     }
-  }
-
-  if (updated || localStorage.getItem(LOCAL_TEMPLATES_KEY) === null) {
-    setStorage(LOCAL_TEMPLATES_KEY, list);
   }
 
   return list;
@@ -445,7 +435,6 @@ export async function fetchNotificationTemplates(): Promise<NotificationTemplate
  * Resets templates back to all 16 default templates (8 Student + 8 Teacher)
  */
 export async function resetDefaultTemplates(): Promise<NotificationTemplate[]> {
-  setStorage(LOCAL_TEMPLATES_KEY, defaultTemplates);
   if (SUPABASE_ANON_KEY) {
     try {
       await supabase.from("notification_templates").upsert(defaultTemplates);
@@ -476,12 +465,6 @@ export async function saveNotificationTemplate(tpl: Partial<NotificationTemplate
     } catch {}
   }
 
-  const list = getStorage(LOCAL_TEMPLATES_KEY, defaultTemplates);
-  const idx = list.findIndex((t) => t.id === newTpl.id);
-  if (idx >= 0) list[idx] = newTpl;
-  else list.unshift(newTpl);
-
-  setStorage(LOCAL_TEMPLATES_KEY, list);
   return newTpl;
 }
 
@@ -494,8 +477,6 @@ export async function deleteNotificationTemplate(id: string): Promise<void> {
       await supabase.from("notification_templates").delete().eq("id", id);
     } catch {}
   }
-  const list = getStorage<NotificationTemplate[]>(LOCAL_TEMPLATES_KEY, defaultTemplates).filter((t) => t.id !== id);
-  setStorage(LOCAL_TEMPLATES_KEY, list);
 }
 
 /**
@@ -508,7 +489,7 @@ export async function fetchBirthdayLogs(): Promise<BirthdayMessageLog[]> {
       if (!error && data) return data;
     } catch {}
   }
-  return getStorage(LOCAL_LOGS_KEY, []);
+  return [];
 }
 
 /**
@@ -543,16 +524,20 @@ export async function sendBirthdayWishToStudent(
 
   let selectedTemplate: NotificationTemplate;
   if (templateId) {
-    selectedTemplate = templates.find((t) => t.id === templateId) || templates[0];
+    selectedTemplate = templates.find((t) => t.id === templateId) || defaultTemplates[0];
   } else {
     // Filter active templates by type (student vs teacher)
-    const matchingTemplates = templates.filter((t) => t.is_active && (t.type === targetType || (!t.type && targetType === "birthday_student")));
+    const matchingTemplates = templates.filter(
+      (t) => t.is_active && (t.type === targetType || (!t.type && targetType === "birthday_student"))
+    );
+
     if (matchingTemplates.length > 0) {
       // Pick random active template!
       const randomIndex = Math.floor(Math.random() * matchingTemplates.length);
       selectedTemplate = matchingTemplates[randomIndex];
     } else {
-      selectedTemplate = templates.find((t) => t.is_active) || templates[0];
+      const fallbackMatching = defaultTemplates.filter((t) => t.type === targetType);
+      selectedTemplate = fallbackMatching[Math.floor(Math.random() * fallbackMatching.length)] || defaultTemplates[0];
     }
   }
 
