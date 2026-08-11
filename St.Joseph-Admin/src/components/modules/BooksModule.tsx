@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { BookItem } from "../../lib/db";
-import { BookOpen, Plus, Trash2, Search, Filter } from "lucide-react";
+import { BookOpen, Plus, Trash2, Search, ArrowRight, BookMarked, Sparkles } from "lucide-react";
 
 interface BooksModuleProps {
   books: BookItem[];
@@ -8,18 +8,70 @@ interface BooksModuleProps {
   onDeleteBook: (id: string) => Promise<void>;
 }
 
+const ALL_CLASSES = [
+  "Class Nursery",
+  "Class LKG",
+  "Class UKG",
+  "Class I",
+  "Class II",
+  "Class III",
+  "Class IV",
+  "Class V",
+  "Class VI",
+  "Class VII",
+  "Class VIII",
+  "Class IX",
+  "Class X",
+  "Class XI (Science)",
+  "Class XI (Commerce)",
+  "Class XI (Arts)",
+  "Class XII (Science)",
+  "Class XII (Commerce)",
+  "Class XII (Arts)"
+];
+
 export const BooksModule: React.FC<BooksModuleProps> = ({ books, onSaveBook, onDeleteBook }) => {
-  const [selectedClassFilter, setSelectedClassFilter] = useState("All");
+  const [selectedClass, setSelectedClass] = useState<string>("Class X");
   const [searchQuery, setSearchQuery] = useState("");
+  const [isAddingNew, setIsAddingNew] = useState(false);
 
   const [form, setForm] = useState({
-    class_name: "Class X",
     subject: "Mathematics",
     book_title: "",
     publisher: "NCERT"
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Map books count per class
+  const classBookCounts = useMemo(() => {
+    const map: Record<string, number> = {};
+    ALL_CLASSES.forEach((c) => { map[c] = 0; });
+
+    books.forEach((b) => {
+      const cls = b.class_name || (b as any).class || (b as any).className || "Class X";
+      map[cls] = (map[cls] || 0) + 1;
+    });
+
+    return map;
+  }, [books]);
+
+  // Filter books for current selected class
+  const currentClassBooks = useMemo(() => {
+    return books.filter((b) => {
+      const cls = b.class_name || (b as any).class || (b as any).className || "";
+      const title = b.book_title || (b as any).title || (b as any).name || "";
+      const subj = b.subject || "";
+
+      const matchesClass = cls.toLowerCase() === selectedClass.toLowerCase();
+      const matchesSearch =
+        searchQuery === "" ||
+        title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        subj.toLowerCase().includes(searchQuery.toLowerCase());
+
+      return matchesClass && matchesSearch;
+    });
+  }, [books, selectedClass, searchQuery]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,33 +80,19 @@ export const BooksModule: React.FC<BooksModuleProps> = ({ books, onSaveBook, onD
     setIsSubmitting(true);
     try {
       await onSaveBook({
-        class_name: form.class_name.trim(),
+        class_name: selectedClass,
         subject: form.subject.trim(),
         book_title: form.book_title.trim(),
         publisher: form.publisher.trim() || "NCERT / Standard"
       });
-      setForm({ class_name: form.class_name, subject: "Science", book_title: "", publisher: "NCERT" });
+      setForm({ subject: "Science", book_title: "", publisher: "NCERT" });
+      setIsAddingNew(false);
     } catch (err) {
       console.error("Save book error:", err);
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  const filteredBooks = books.filter((b) => {
-    const cls = b.class_name || (b as any).class || (b as any).className || "";
-    const title = b.book_title || (b as any).title || (b as any).name || "";
-    const subj = b.subject || "";
-
-    const matchesClass = selectedClassFilter === "All" || cls.toLowerCase().includes(selectedClassFilter.toLowerCase());
-    const matchesSearch =
-      searchQuery === "" ||
-      title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      subj.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      cls.toLowerCase().includes(searchQuery.toLowerCase());
-
-    return matchesClass && matchesSearch;
-  });
 
   return (
     <div className="space-y-6">
@@ -65,165 +103,205 @@ export const BooksModule: React.FC<BooksModuleProps> = ({ books, onSaveBook, onD
             <BookOpen className="w-6 h-6 text-amber-400" /> Prescribed Books & Textbooks List
           </h2>
           <p className="text-xs text-slate-400 mt-1">
-            Manage class-wise NCERT & reference textbooks displayed on the school website.
+            Select a class from the left list to view and manage prescribed NCERT textbooks for that specific class.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative">
-            <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Search book title, subject..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:border-amber-400 focus:outline-none w-60"
-            />
-          </div>
-
+        <div className="flex items-center gap-3">
           <div className="bg-amber-500/10 border border-amber-500/30 text-amber-400 px-4 py-2.5 rounded-xl font-bold text-xs">
-            Total Books: {books.length} Records
+            Total Books in DB: {books.length} Records
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Form: Add Book */}
-        <form onSubmit={handleSubmit} className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4 lg:col-span-1">
-          <h3 className="font-extrabold text-sm text-white flex items-center gap-2">
-            <Plus className="w-4 h-4 text-amber-400" /> Add Book to List
-          </h3>
-          <div className="space-y-3 text-xs">
-            <div>
-              <label className="text-slate-400 font-bold block mb-1">Class Name *</label>
-              <input
-                type="text"
-                placeholder="e.g. Class X or Class Nursery *"
-                value={form.class_name}
-                onChange={(e) => setForm({ ...form, class_name: e.target.value })}
-                required
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white placeholder-slate-500 focus:border-amber-400 focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="text-slate-400 font-bold block mb-1">Subject *</label>
-              <input
-                type="text"
-                placeholder="e.g. Mathematics or Science *"
-                value={form.subject}
-                onChange={(e) => setForm({ ...form, subject: e.target.value })}
-                required
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white placeholder-slate-500 focus:border-amber-400 focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="text-slate-400 font-bold block mb-1">Book Title *</label>
-              <input
-                type="text"
-                placeholder="e.g. NCERT Mathematics Part I *"
-                value={form.book_title}
-                onChange={(e) => setForm({ ...form, book_title: e.target.value })}
-                required
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white placeholder-slate-500 focus:border-amber-400 focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="text-slate-400 font-bold block mb-1">Publisher</label>
-              <input
-                type="text"
-                placeholder="e.g. NCERT"
-                value={form.publisher}
-                onChange={(e) => setForm({ ...form, publisher: e.target.value })}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white placeholder-slate-500 focus:border-amber-400 focus:outline-none"
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold py-3 rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all hover:scale-105"
-            >
-              <Plus className="w-4 h-4" />
-              <span>{isSubmitting ? "Saving..." : "Add Book to Database"}</span>
-            </button>
-          </div>
-        </form>
-
-        {/* Books List Table */}
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl lg:col-span-2 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="font-extrabold text-sm text-white flex items-center gap-2">
-              <BookOpen className="w-4 h-4 text-emerald-400" /> Prescribed Books Directory
+      {/* Two-Pane Class Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Left Side: Class List Bar */}
+        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-4 shadow-xl space-y-3 lg:col-span-1 max-h-[75vh] overflow-y-auto">
+          <div className="px-2 py-1 border-b border-slate-800 pb-3 flex items-center justify-between">
+            <h3 className="font-extrabold text-xs text-white uppercase tracking-wider flex items-center gap-2">
+              <BookMarked className="w-4 h-4 text-amber-400" /> Select Class
             </h3>
-
-            {/* Class Filter */}
-            <select
-              value={selectedClassFilter}
-              onChange={(e) => setSelectedClassFilter(e.target.value)}
-              className="bg-slate-950 border border-slate-800 text-amber-400 text-xs font-bold rounded-xl px-3 py-1.5 focus:border-amber-400 focus:outline-none"
-            >
-              <option value="All">All Classes</option>
-              {[
-                "Class Nursery", "Class LKG", "Class UKG", "Class I", "Class II", "Class III",
-                "Class IV", "Class V", "Class VI", "Class VII", "Class VIII", "Class IX", "Class X",
-                "Class XI", "Class XII"
-              ].map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
+            <span className="text-[10px] font-bold text-slate-500">{ALL_CLASSES.length} Classes</span>
           </div>
 
-          {filteredBooks.length === 0 ? (
-            <div className="p-12 text-center space-y-3">
-              <BookOpen className="w-12 h-12 text-slate-600 mx-auto" />
-              <h3 className="text-base font-bold text-slate-300">No Books Found</h3>
-              <p className="text-xs text-slate-500 max-w-xs mx-auto">
-                Add prescribed textbooks using the form on the left to show them here and on the main website.
+          <div className="space-y-1.5">
+            {ALL_CLASSES.map((cls) => {
+              const count = classBookCounts[cls] || 0;
+              const isSelected = selectedClass === cls;
+
+              return (
+                <button
+                  key={cls}
+                  onClick={() => {
+                    setSelectedClass(cls);
+                    setSearchQuery("");
+                  }}
+                  className={`w-full flex items-center justify-between p-3 rounded-2xl text-xs font-bold transition-all ${
+                    isSelected
+                      ? "bg-amber-500 text-slate-950 shadow-lg scale-[1.02]"
+                      : "bg-slate-950/60 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800/80"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">📚</span>
+                    <span>{cls}</span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    <span
+                      className={`text-[10px] font-mono font-extrabold px-2 py-0.5 rounded-full ${
+                        isSelected ? "bg-slate-950 text-amber-400" : "bg-slate-800 text-slate-400"
+                      }`}
+                    >
+                      {count} Books
+                    </span>
+                    <ArrowRight className={`w-3.5 h-3.5 ${isSelected ? "text-slate-950" : "text-slate-600"}`} />
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Right Side: Selected Class Book List & Add Form */}
+        <div className="lg:col-span-3 space-y-5">
+          {/* Class Header Bar */}
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-extrabold text-amber-400 bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-full uppercase">
+                  Class Book List
+                </span>
+              </div>
+              <h3 className="text-xl font-heading font-extrabold text-white mt-1">
+                {selectedClass} — Textbooks Directory
+              </h3>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Displaying {currentClassBooks.length} prescribed books for {selectedClass}.
               </p>
             </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-300">
-                <thead className="bg-slate-950 text-slate-400 font-bold uppercase border-b border-slate-800 text-[11px]">
-                  <tr>
-                    <th className="py-3 px-3">Class</th>
-                    <th className="py-3 px-3">Subject</th>
-                    <th className="py-3 px-3">Book Title</th>
-                    <th className="py-3 px-3">Publisher</th>
-                    <th className="py-3 px-3 text-right">Delete</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/60">
-                  {filteredBooks.map((b) => {
-                    const cls = b.class_name || (b as any).class || (b as any).className || "Class X";
-                    const title = b.book_title || (b as any).title || (b as any).name || "Textbook";
-                    const subj = b.subject || "General";
-                    const pub = b.publisher || "NCERT / Standard";
 
-                    return (
-                      <tr key={b.id} className="hover:bg-slate-800/40 transition-colors">
-                        <td className="py-3 px-3 font-bold text-amber-400">{cls}</td>
-                        <td className="py-3 px-3 font-medium text-slate-300">{subj}</td>
-                        <td className="py-3 px-3 font-extrabold text-white">{title}</td>
-                        <td className="py-3 px-3 text-slate-400">{pub}</td>
-                        <td className="py-3 px-3 text-right">
-                          <button
-                            onClick={() => {
-                              if (confirm(`Delete book "${title}" for ${cls}?`)) {
-                                onDeleteBook(b.id);
-                              }
-                            }}
-                            className="p-1.5 text-slate-500 hover:text-red-400 transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative">
+                <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Filter subject/title..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:border-amber-400 focus:outline-none w-44"
+                />
+              </div>
+
+              <button
+                onClick={() => setIsAddingNew(!isAddingNew)}
+                className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-md transition-all hover:scale-105"
+              >
+                <Plus className="w-4 h-4" />
+                <span>{isAddingNew ? "Close Form" : `+ Add Book to ${selectedClass}`}</span>
+              </button>
             </div>
+          </div>
+
+          {/* Add Book Form Collapsible Card */}
+          {isAddingNew && (
+            <form
+              onSubmit={handleSubmit}
+              className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4 animate-fadeIn"
+            >
+              <h4 className="font-extrabold text-xs text-amber-400 flex items-center gap-2">
+                <Sparkles className="w-4 h-4" /> Register New Book for {selectedClass}
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                <input
+                  type="text"
+                  placeholder="Subject (e.g. Science) *"
+                  value={form.subject}
+                  onChange={(e) => setForm({ ...form, subject: e.target.value })}
+                  required
+                  className="p-3 bg-slate-950 border border-slate-800 rounded-xl text-white focus:border-amber-400 focus:outline-none"
+                />
+                <input
+                  type="text"
+                  placeholder="Book Title (e.g. NCERT Science Part I) *"
+                  value={form.book_title}
+                  onChange={(e) => setForm({ ...form, book_title: e.target.value })}
+                  required
+                  className="p-3 bg-slate-950 border border-slate-800 rounded-xl text-white focus:border-amber-400 focus:outline-none"
+                />
+                <input
+                  type="text"
+                  placeholder="Publisher (e.g. NCERT)"
+                  value={form.publisher}
+                  onChange={(e) => setForm({ ...form, publisher: e.target.value })}
+                  className="p-3 bg-slate-950 border border-slate-800 rounded-xl text-white focus:border-amber-400 focus:outline-none"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs px-5 py-2.5 rounded-xl shadow-lg flex items-center gap-2 disabled:opacity-50"
+              >
+                <Plus className="w-4 h-4" />
+                <span>{isSubmitting ? "Saving Book..." : `Save Book to ${selectedClass}`}</span>
+              </button>
+            </form>
           )}
+
+          {/* Table of Books for Selected Class */}
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
+            {currentClassBooks.length === 0 ? (
+              <div className="p-12 text-center space-y-3">
+                <BookOpen className="w-12 h-12 text-slate-600 mx-auto" />
+                <h3 className="text-base font-bold text-slate-300">No Prescribed Books Registered for {selectedClass}</h3>
+                <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                  Click "+ Add Book to {selectedClass}" above to populate textbooks for this class.
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs text-slate-300">
+                  <thead className="bg-slate-950 text-slate-400 font-bold uppercase border-b border-slate-800 text-[11px]">
+                    <tr>
+                      <th className="py-4 px-4">Subject</th>
+                      <th className="py-4 px-4">Book Title</th>
+                      <th className="py-4 px-4">Publisher</th>
+                      <th className="py-4 px-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60">
+                    {currentClassBooks.map((b) => {
+                      const title = b.book_title || (b as any).title || (b as any).name || "Textbook";
+                      const subj = b.subject || "General";
+                      const pub = b.publisher || "NCERT / Standard";
+
+                      return (
+                        <tr key={b.id} className="hover:bg-slate-800/40 transition-colors">
+                          <td className="py-4 px-4 font-bold text-amber-400">{subj}</td>
+                          <td className="py-4 px-4 font-extrabold text-white text-sm">{title}</td>
+                          <td className="py-4 px-4 text-slate-400 font-medium">{pub}</td>
+                          <td className="py-4 px-4 text-right">
+                            <button
+                              onClick={() => {
+                                if (confirm(`Delete book "${title}" from ${selectedClass}?`)) {
+                                  onDeleteBook(b.id);
+                                }
+                              }}
+                              className="p-2 text-slate-400 hover:text-red-400 bg-slate-950 rounded-xl border border-slate-800 transition-all"
+                              title="Delete Book Record"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
