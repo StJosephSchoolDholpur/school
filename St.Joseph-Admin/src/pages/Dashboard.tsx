@@ -474,6 +474,7 @@ export const Dashboard: React.FC = () => {
         <StudentAdmissionModal
           isOpen={isAdmissionModalOpen}
           onClose={() => setIsAdmissionModalOpen(false)}
+          classList={classList}
           onSaveStudent={handleSaveStudent}
         />
 

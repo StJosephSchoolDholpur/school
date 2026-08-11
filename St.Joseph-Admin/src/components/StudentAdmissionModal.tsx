@@ -1,20 +1,57 @@
 import React, { useState, useEffect } from "react";
 import { X, ChevronRight, ChevronLeft, Check, User, Users, School, FileText, Building2, CheckCircle2 } from "lucide-react";
-import { Student } from "../lib/db";
+import { Student, ClassEntity, fetchClasses } from "../lib/db";
 
 interface StudentAdmissionModalProps {
   isOpen: boolean;
   onClose: () => void;
+  classList?: ClassEntity[];
   onSaveStudent: (studentData: Partial<Student>) => Promise<void>;
 }
+
+const DEFAULT_CLASSES = [
+  "Class Nursery",
+  "Class LKG",
+  "Class UKG",
+  "Class I",
+  "Class II",
+  "Class III",
+  "Class IV",
+  "Class V",
+  "Class VI",
+  "Class VII",
+  "Class VIII",
+  "Class IX",
+  "Class X",
+  "Class XI (Science)",
+  "Class XI (Commerce)",
+  "Class XI (Arts)",
+  "Class XII (Science)",
+  "Class XII (Commerce)",
+  "Class XII (Arts)"
+];
 
 export const StudentAdmissionModal: React.FC<StudentAdmissionModalProps> = ({
   isOpen,
   onClose,
+  classList,
   onSaveStudent,
 }) => {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [submitting, setSubmitting] = useState<boolean>(false);
+  const [availableClasses, setAvailableClasses] = useState<string[]>(DEFAULT_CLASSES);
+
+  useEffect(() => {
+    if (classList && classList.length > 0) {
+      setAvailableClasses(classList.map((c) => c.name));
+    } else {
+      fetchClasses().then((classes) => {
+        if (classes && classes.length > 0) {
+          setAvailableClasses(classes.map((c) => c.name));
+        }
+      });
+    }
+  }, [classList]);
 
   const getInitialFormData = (): Partial<Student> => ({
     form_no: `FORM-2026-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -247,7 +284,8 @@ export const StudentAdmissionModal: React.FC<StudentAdmissionModalProps> = ({
                     onChange={(e) => setFormData({ ...formData, class: e.target.value })}
                     className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-amber-400 font-bold"
                   >
-                    {["N/A", "Class Nursery", "Class LKG", "Class UKG", "Class I", "Class II", "Class III", "Class IV", "Class V", "Class VI", "Class VII", "Class VIII", "Class IX", "Class X", "Class XI", "Class XII"].map((c) => (
+                    <option value="">-- Select Class --</option>
+                    {availableClasses.map((c) => (
                       <option key={c} value={c}>{c}</option>
                     ))}
                   </select>
