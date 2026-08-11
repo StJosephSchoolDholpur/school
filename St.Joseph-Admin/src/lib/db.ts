@@ -1333,7 +1333,15 @@ export async function deleteEvent(id: string): Promise<void> {
 export async function fetchBooks(): Promise<BookItem[]> {
   try {
     const { data, error } = await supabase.from("books").select("*");
-    if (!error && data) return data;
+    if (!error && data) {
+      return data.map((b: any) => ({
+        id: b.id,
+        class_name: b.class_name || b.class || b.className || "Class X",
+        subject: b.subject || "General",
+        book_title: b.book_title || b.title || b.name || "Textbook",
+        publisher: b.publisher || "NCERT / Standard"
+      }));
+    }
   } catch (e) {
     console.warn("Supabase fetchBooks error", e);
   }
@@ -1341,22 +1349,25 @@ export async function fetchBooks(): Promise<BookItem[]> {
 }
 
 export async function saveBook(item: Omit<BookItem, "id"> & { id?: string }): Promise<BookItem> {
-  const record: BookItem = {
-    id: item.id || `bk_${Date.now()}`,
+  const payload: any = {
     class_name: item.class_name,
     subject: item.subject,
     book_title: item.book_title,
     publisher: item.publisher || "NCERT / Standard",
   };
+
+  if (item.id && !item.id.startsWith("bk_")) {
+    payload.id = item.id;
+  }
+
   try {
-    const payload = cleanPayload(record);
     const { data, error } = await supabase.from("books").upsert([payload]).select().single();
     if (error) console.warn("Supabase books save error:", error);
-    if (data?.id) record.id = data.id;
+    if (data?.id) return { ...item, id: data.id };
   } catch (e) {
     console.warn("Supabase saveBook exception", e);
   }
-  return record;
+  return { ...item, id: item.id || `bk_${Date.now()}` };
 }
 
 export async function deleteBook(id: string): Promise<void> {
