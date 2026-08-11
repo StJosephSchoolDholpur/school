@@ -26,7 +26,6 @@ export const TeacherRegistrationModal: React.FC<TeacherRegistrationModalProps> =
     qualification: "",
     experience_years: "",
     subjects_taught: "",
-    classes_assigned: "",
     phone: "",
     email: "",
     address: "",
@@ -252,16 +251,6 @@ export const TeacherRegistrationModal: React.FC<TeacherRegistrationModalProps> =
                   placeholder="e.g. Mathematics, Statistics"
                   value={formData.subjects_taught}
                   onChange={(e) => setFormData({ ...formData, subjects_taught: e.target.value })}
-                  className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
-                />
-              </div>
-              <div>
-                <label className="block text-slate-400 font-bold mb-1">Classes Assigned</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Class IX, Class X"
-                  value={formData.classes_assigned}
-                  onChange={(e) => setFormData({ ...formData, classes_assigned: e.target.value })}
                   className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white"
                 />
               </div>

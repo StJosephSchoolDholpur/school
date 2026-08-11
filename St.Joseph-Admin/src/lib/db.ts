@@ -432,6 +432,9 @@ export async function saveTeacherRecord(t: Omit<Teacher, "id"> & { id?: string }
 
   try {
     const dbPayload: any = cleanPayload(record);
+    delete dbPayload.wishes;
+    delete dbPayload.classes_assigned;
+
     if (t.id && !t.id.startsWith("t_")) {
       dbPayload.id = t.id;
     } else {
@@ -440,7 +443,7 @@ export async function saveTeacherRecord(t: Omit<Teacher, "id"> & { id?: string }
 
     const { data, error } = await supabase.from("teachers").upsert([dbPayload]).select();
     if (error) {
-      console.error("Supabase teacher save error:", error);
+      console.error("Supabase teacher save error:", error.message, error);
     } else if (data && data[0]?.id) {
       record.id = data[0].id;
     }
