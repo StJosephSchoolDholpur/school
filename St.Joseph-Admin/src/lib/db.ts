@@ -1122,3 +1122,12 @@ export async function deleteClass(id: string): Promise<void> {
     console.error("Supabase deleteClass exception:", e);
   }
 }
+
+export async function clearAllClasses(): Promise<void> {
+  try {
+    const { error } = await supabase.from("classes").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    if (error) console.error("Supabase clearAllClasses error:", error);
+  } catch (e) {
+    console.error("Supabase clearAllClasses exception:", e);
+  }
+}

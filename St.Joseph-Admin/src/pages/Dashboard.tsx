@@ -62,7 +62,8 @@ import {
   fetchClasses,
   seedInitialClasses,
   saveClass,
-  deleteClass
+  deleteClass,
+  clearAllClasses
 } from "../lib/db";
 
 // Modular Sub-Components for All Pages
@@ -318,6 +319,11 @@ export const Dashboard: React.FC = () => {
     await loadData();
   };
 
+  const handleClearClasses = async () => {
+    await clearAllClasses();
+    await loadData();
+  };
+
   const path = location.pathname;
 
   return (
@@ -346,6 +352,7 @@ export const Dashboard: React.FC = () => {
             onSaveClass={handleSaveClass}
             onDeleteClass={handleDeleteClass}
             onSeedClasses={handleSeedClasses}
+            onClearClasses={handleClearClasses}
           />
         )}
 

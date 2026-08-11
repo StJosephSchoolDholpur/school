@@ -9,6 +9,7 @@ interface ClassManagementModuleProps {
   onSaveClass: (c: Omit<ClassEntity, "id"> & { id?: string }) => Promise<void>;
   onDeleteClass: (id: string) => Promise<void>;
   onSeedClasses?: () => Promise<void>;
+  onClearClasses?: () => Promise<void>;
 }
 
 export const ClassManagementModule: React.FC<ClassManagementModuleProps> = ({
@@ -17,7 +18,8 @@ export const ClassManagementModule: React.FC<ClassManagementModuleProps> = ({
   books,
   onSaveClass,
   onDeleteClass,
-  onSeedClasses
+  onSeedClasses,
+  onClearClasses
 }) => {
   const [form, setForm] = useState({
     name: "",
@@ -28,6 +30,7 @@ export const ClassManagementModule: React.FC<ClassManagementModuleProps> = ({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSeeding, setIsSeeding] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -67,6 +70,20 @@ export const ClassManagementModule: React.FC<ClassManagementModuleProps> = ({
     }
   };
 
+  const handleClearClick = async () => {
+    if (!onClearClasses) return;
+    if (confirm("Are you sure you want to WIPE ALL CLASSES from the database table?")) {
+      setIsClearing(true);
+      try {
+        await onClearClasses();
+      } catch (err) {
+        console.error("Clear error:", err);
+      } finally {
+        setIsClearing(false);
+      }
+    }
+  };
+
   const handleEditClick = (c: ClassEntity) => {
     setEditingId(c.id);
     setForm({
@@ -90,7 +107,18 @@ export const ClassManagementModule: React.FC<ClassManagementModuleProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          {classList.length > 0 && onClearClasses && (
+            <button
+              onClick={handleClearClick}
+              disabled={isClearing}
+              className="bg-red-500/10 border border-red-500/30 hover:bg-red-500/20 text-red-400 text-xs font-bold px-3.5 py-2.5 rounded-xl flex items-center gap-1.5 transition-all disabled:opacity-50"
+            >
+              <Trash2 className="w-4 h-4 text-red-400" />
+              <span>{isClearing ? "Wiping..." : "Wipe All Classes (Clear Table)"}</span>
+            </button>
+          )}
+
           {onSeedClasses && (
             <button
               onClick={handleSeedClick}
@@ -98,7 +126,7 @@ export const ClassManagementModule: React.FC<ClassManagementModuleProps> = ({
               className="bg-slate-950 border border-slate-800 hover:border-amber-500/40 text-amber-400 text-xs font-bold px-4 py-2.5 rounded-xl flex items-center gap-1.5 shadow-md transition-all disabled:opacity-50"
             >
               <Sparkles className="w-4 h-4 text-amber-400" />
-              <span>{isSeeding ? "Seeding..." : "+ Seed 20 Standard Classes (PG to XII)"}</span>
+              <span>{isSeeding ? "Seeding..." : "+ Seed 20 Standard Classes"}</span>
             </button>
           )}
 
