@@ -30,6 +30,46 @@ const ALL_CLASSES = [
   "Class XII (Arts)"
 ];
 
+// Smart Class Normalization Helper to match "Class 10", "Class X", "10th", "Class X-A"
+const normalizeClassKey = (clsName: string): string => {
+  if (!clsName) return "";
+  let clean = clsName.toLowerCase().replace(/class/g, "").replace(/\s+/g, "").trim();
+
+  // Strip section suffixes e.g. -a, -b
+  clean = clean.replace(/[-_][a-z0-9]/g, "");
+
+  // Strip stream parentheses e.g. (science), (commerce), (arts)
+  clean = clean.replace(/\(science\)/g, "").replace(/\(commerce\)/g, "").replace(/\(arts\)/g, "");
+
+  const romanMap: Record<string, string> = {
+    "nursery": "nursery",
+    "lkg": "lkg",
+    "ukg": "ukg",
+    "i": "1",
+    "ii": "2",
+    "iii": "3",
+    "iv": "4",
+    "v": "5",
+    "vi": "6",
+    "vii": "7",
+    "viii": "8",
+    "ix": "9",
+    "x": "10",
+    "xi": "11",
+    "xii": "12"
+  };
+
+  if (romanMap[clean]) return romanMap[clean];
+  return clean.replace(/st|nd|rd|th/g, "");
+};
+
+const isSameClass = (clsA: string, clsB: string): boolean => {
+  const normA = normalizeClassKey(clsA);
+  const normB = normalizeClassKey(clsB);
+  if (normA && normB && normA === normB) return true;
+  return clsA.toLowerCase().trim() === clsB.toLowerCase().trim();
+};
+
 export const BooksModule: React.FC<BooksModuleProps> = ({ books, onSaveBook, onDeleteBook }) => {
   const [selectedClass, setSelectedClass] = useState<string>("Class X");
   const [searchQuery, setSearchQuery] = useState("");
@@ -43,14 +83,14 @@ export const BooksModule: React.FC<BooksModuleProps> = ({ books, onSaveBook, onD
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Map books count per class
+  // Map books count per class using smart class matching
   const classBookCounts = useMemo(() => {
     const map: Record<string, number> = {};
-    ALL_CLASSES.forEach((c) => { map[c] = 0; });
-
-    books.forEach((b) => {
-      const cls = b.class_name || (b as any).class || (b as any).className || "Class X";
-      map[cls] = (map[cls] || 0) + 1;
+    ALL_CLASSES.forEach((c) => {
+      map[c] = books.filter((b) => {
+        const cls = b.class_name || (b as any).class || (b as any).className || "";
+        return isSameClass(cls, c);
+      }).length;
     });
 
     return map;
@@ -63,7 +103,7 @@ export const BooksModule: React.FC<BooksModuleProps> = ({ books, onSaveBook, onD
       const title = b.book_title || (b as any).title || (b as any).name || "";
       const subj = b.subject || "";
 
-      const matchesClass = cls.toLowerCase() === selectedClass.toLowerCase();
+      const matchesClass = isSameClass(cls, selectedClass);
       const matchesSearch =
         searchQuery === "" ||
         title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -103,13 +143,13 @@ export const BooksModule: React.FC<BooksModuleProps> = ({ books, onSaveBook, onD
             <BookOpen className="w-6 h-6 text-amber-400" /> Prescribed Books & Textbooks List
           </h2>
           <p className="text-xs text-slate-400 mt-1">
-            Select a class from the left list to view and manage prescribed NCERT textbooks for that specific class.
+            Select a class from the left sidebar to view and manage prescribed NCERT textbooks for that specific class.
           </p>
         </div>
 
         <div className="flex items-center gap-3">
           <div className="bg-amber-500/10 border border-amber-500/30 text-amber-400 px-4 py-2.5 rounded-xl font-bold text-xs">
-            Total Books in DB: {books.length} Records
+            Total Books in Database: {books.length} Records
           </div>
         </div>
       </div>

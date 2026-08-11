@@ -1329,11 +1329,70 @@ export async function deleteEvent(id: string): Promise<void> {
   }
 }
 
+export const initialBooks: BookItem[] = [
+  { id: "bk_n1", class_name: "Class Nursery", subject: "English", book_title: "Alphabet World & Phonics Picture Book", publisher: "WonderKids Press" },
+  { id: "bk_n2", class_name: "Class Nursery", subject: "Mathematics", book_title: "My First Number Book (1-20)", publisher: "WonderKids Press" },
+  { id: "bk_l1", class_name: "Class LKG", subject: "English", book_title: "Early Steps English Reader & Writing", publisher: "S. Chand" },
+  { id: "bk_l2", class_name: "Class LKG", subject: "Mathematics", book_title: "Pre-School Maths (1-50)", publisher: "S. Chand" },
+  { id: "bk_u1", class_name: "Class UKG", subject: "English", book_title: "Senior Kindergarten Literacy Skills", publisher: "Oxford Press" },
+  { id: "bk_u2", class_name: "Class UKG", subject: "Mathematics", book_title: "Senior Kindergarten Numeracy Skills (1-100)", publisher: "Oxford Press" },
+  { id: "bk_u3", class_name: "Class UKG", subject: "EVS / General Awareness", book_title: "Environmental Studies for Beginners", publisher: "Oxford Press" },
+
+  { id: "bk_1_1", class_name: "Class I", subject: "English", book_title: "Mridang - English Textbook for Class 1", publisher: "NCERT" },
+  { id: "bk_1_2", class_name: "Class I", subject: "Mathematics", book_title: "Joyful Mathematics - Class 1", publisher: "NCERT" },
+  { id: "bk_1_3", class_name: "Class I", subject: "Hindi", book_title: "Sarangi - Hindi Reader Class 1", publisher: "NCERT" },
+  { id: "bk_2_1", class_name: "Class II", subject: "English", book_title: "Mridang - English Reader Class 2", publisher: "NCERT" },
+  { id: "bk_2_2", class_name: "Class II", subject: "Mathematics", book_title: "Joyful Mathematics - Class 2", publisher: "NCERT" },
+  { id: "bk_2_3", class_name: "Class II", subject: "Hindi", book_title: "Sarangi - Hindi Reader Class 2", publisher: "NCERT" },
+  { id: "bk_3_1", class_name: "Class III", subject: "English", book_title: "Santoor - English Reader Class 3", publisher: "NCERT" },
+  { id: "bk_3_2", class_name: "Class III", subject: "Mathematics", book_title: "Math-Magic Book 3", publisher: "NCERT" },
+  { id: "bk_3_3", class_name: "Class III", subject: "EVS", book_title: "Looking Around - EVS Class 3", publisher: "NCERT" },
+  { id: "bk_4_1", class_name: "Class IV", subject: "English", book_title: "Marigold - English Reader Book 4", publisher: "NCERT" },
+  { id: "bk_4_2", class_name: "Class IV", subject: "Mathematics", book_title: "Math-Magic Book 4", publisher: "NCERT" },
+  { id: "bk_4_3", class_name: "Class IV", subject: "EVS", book_title: "Looking Around - EVS Book 4", publisher: "NCERT" },
+  { id: "bk_5_1", class_name: "Class V", subject: "English", book_title: "Marigold - English Reader Book 5", publisher: "NCERT" },
+  { id: "bk_5_2", class_name: "Class V", subject: "Mathematics", book_title: "Math-Magic Book 5", publisher: "NCERT" },
+  { id: "bk_5_3", class_name: "Class V", subject: "EVS", book_title: "Looking Around - EVS Book 5", publisher: "NCERT" },
+
+  { id: "bk_6_1", class_name: "Class VI", subject: "English", book_title: "Poorvi - English Reader Class 6", publisher: "NCERT" },
+  { id: "bk_6_2", class_name: "Class VI", subject: "Mathematics", book_title: "Ganita Prakash - Mathematics Class 6", publisher: "NCERT" },
+  { id: "bk_6_3", class_name: "Class VI", subject: "Science", book_title: "Curiosity - Science Reader Class 6", publisher: "NCERT" },
+  { id: "bk_6_4", class_name: "Class VI", subject: "Social Science", book_title: "Exploring Society: India and Beyond", publisher: "NCERT" },
+  { id: "bk_7_1", class_name: "Class VII", subject: "English", book_title: "Honeycomb - English Reader Class 7", publisher: "NCERT" },
+  { id: "bk_7_2", class_name: "Class VII", subject: "Mathematics", book_title: "Mathematics Textbook for Class 7", publisher: "NCERT" },
+  { id: "bk_7_3", class_name: "Class VII", subject: "Science", book_title: "Science Textbook for Class 7", publisher: "NCERT" },
+  { id: "bk_8_1", class_name: "Class VIII", subject: "English", book_title: "Honeydew - English Reader Class 8", publisher: "NCERT" },
+  { id: "bk_8_2", class_name: "Class VIII", subject: "Mathematics", book_title: "Mathematics Textbook for Class 8", publisher: "NCERT" },
+  { id: "bk_8_3", class_name: "Class VIII", subject: "Science", book_title: "Science Textbook for Class 8", publisher: "NCERT" },
+  { id: "bk_8_4", class_name: "Class VIII", subject: "Social Science", book_title: "Our Pasts III & Resource & Development", publisher: "NCERT" },
+
+  { id: "bk_9_1", class_name: "Class IX", subject: "English", book_title: "Beehive & Moments Supplementary Reader", publisher: "NCERT" },
+  { id: "bk_9_2", class_name: "Class IX", subject: "Mathematics", book_title: "Mathematics Textbook for Class 9", publisher: "NCERT" },
+  { id: "bk_9_3", class_name: "Class IX", subject: "Science", book_title: "Science Textbook for Class 9", publisher: "NCERT" },
+  { id: "bk_9_4", class_name: "Class IX", subject: "Social Science", book_title: "India & Contemporary World I & Economics", publisher: "NCERT" },
+  { id: "bk_10_1", class_name: "Class X", subject: "Mathematics", book_title: "Mathematics Textbook for Class 10", publisher: "NCERT" },
+  { id: "bk_10_2", class_name: "Class X", subject: "Science", book_title: "Science & Technology Textbook Class 10", publisher: "NCERT" },
+  { id: "bk_10_3", class_name: "Class X", subject: "English", book_title: "First Flight & Footprints Without Feet", publisher: "NCERT" },
+  { id: "bk_10_4", class_name: "Class X", subject: "Social Science", book_title: "India & Contemporary World II & Democratic Politics", publisher: "NCERT" },
+  { id: "bk_10_5", class_name: "Class X", subject: "Hindi", book_title: "Kshitij Part 2 & Sparsh Part 2", publisher: "NCERT" },
+
+  { id: "bk_11_s1", class_name: "Class XI (Science)", subject: "Physics", book_title: "Physics Part I & II Class 11", publisher: "NCERT" },
+  { id: "bk_11_s2", class_name: "Class XI (Science)", subject: "Chemistry", book_title: "Chemistry Part I & II Class 11", publisher: "NCERT" },
+  { id: "bk_11_s3", class_name: "Class XI (Science)", subject: "Mathematics", book_title: "Mathematics Textbook Class 11", publisher: "NCERT" },
+  { id: "bk_11_c1", class_name: "Class XI (Commerce)", subject: "Accountancy", book_title: "Financial Accounting Part I Class 11", publisher: "NCERT" },
+  { id: "bk_11_c2", class_name: "Class XI (Commerce)", subject: "Business Studies", book_title: "Business Studies Class 11", publisher: "NCERT" },
+  { id: "bk_12_s1", class_name: "Class XII (Science)", subject: "Physics", book_title: "Physics Part I & II Class 12", publisher: "NCERT" },
+  { id: "bk_12_s2", class_name: "Class XII (Science)", subject: "Chemistry", book_title: "Chemistry Part I & II Class 12", publisher: "NCERT" },
+  { id: "bk_12_s3", class_name: "Class XII (Science)", subject: "Mathematics", book_title: "Mathematics Part I & II Class 12", publisher: "NCERT" },
+  { id: "bk_12_c1", class_name: "Class XII (Commerce)", subject: "Accountancy", book_title: "Accountancy Part I & II Class 12", publisher: "NCERT" },
+  { id: "bk_12_c2", class_name: "Class XII (Commerce)", subject: "Business Studies", book_title: "Business Studies Part I & II Class 12", publisher: "NCERT" }
+];
+
 // 9. Books Service
 export async function fetchBooks(): Promise<BookItem[]> {
   try {
     const { data, error } = await supabase.from("books").select("*");
-    if (!error && data) {
+    if (!error && data && data.length > 0) {
       return data.map((b: any) => ({
         id: b.id,
         class_name: b.class_name || b.class || b.className || "Class X",
@@ -1345,7 +1404,7 @@ export async function fetchBooks(): Promise<BookItem[]> {
   } catch (e) {
     console.warn("Supabase fetchBooks error", e);
   }
-  return [];
+  return initialBooks;
 }
 
 export async function saveBook(item: Omit<BookItem, "id"> & { id?: string }): Promise<BookItem> {
