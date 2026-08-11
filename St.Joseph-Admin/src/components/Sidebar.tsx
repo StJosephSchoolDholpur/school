@@ -61,8 +61,6 @@ export const Sidebar: React.FC = () => {
     { id: "students", path: "/students", label: "Class-Wise Students", icon: Users },
     { id: "teachers", path: "/teachers", label: "Teachers Directory", icon: GraduationCap },
     { id: "attendance", path: "/attendance", label: "Daily Attendance", icon: UserCheck, badge: "Live" },
-    { id: "examinations", path: "/examinations", label: "Exams & Marksheets", icon: FileSpreadsheet, badge: "New" },
-    { id: "fee_collections", path: "/fee-collections", label: "Collect Fee & Receipts", icon: Receipt, badge: "Billing" },
     { id: "tc", path: "/tc", label: "TC Portal Manager", icon: FileCheck2 },
     { id: "fees", path: "/fee-structure", label: "Fee Structure", icon: IndianRupee },
     { id: "transport", path: "/transport", label: "Transportation Routes", icon: Bus },

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { Student, Teacher, AttendanceRecord, ClassEntity } from "../../lib/db";
-import { UserCheck, Calendar, Filter, Save, CheckCircle, XCircle, Clock, Check } from "lucide-react";
+import { UserCheck, Calendar, Save, CheckCircle, XCircle, Clock, Check, ArrowLeft, School, Users, ChevronRight } from "lucide-react";
 
 interface AttendanceModuleProps {
   students: Student[];
@@ -33,6 +33,13 @@ const DEFAULT_CLASSES = [
   "Class XII (Arts)"
 ];
 
+const isSameClass = (clsA: string, clsB: string): boolean => {
+  if (!clsA || !clsB) return false;
+  const cleanA = clsA.trim().toLowerCase().replace(/^class\s+/i, "").trim();
+  const cleanB = clsB.trim().toLowerCase().replace(/^class\s+/i, "").trim();
+  return cleanA === cleanB;
+};
+
 export const AttendanceModule: React.FC<AttendanceModuleProps> = ({
   students,
   teachers,
@@ -48,7 +55,7 @@ export const AttendanceModule: React.FC<AttendanceModuleProps> = ({
   }, [classList]);
 
   const todayDateStr = new Date().toISOString().split("T")[0];
-  const [selectedClass, setSelectedClass] = useState("Class X");
+  const [selectedClass, setSelectedClass] = useState<string | null>(null);
   const [attendanceMode, setAttendanceMode] = useState<"students" | "teachers">("students");
 
   // Local attendance state for current marking session
@@ -56,7 +63,27 @@ export const AttendanceModule: React.FC<AttendanceModuleProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
 
-  const filteredStudents = students.filter((s) => (s.class || activeClassNames[0] || "Class PG") === selectedClass);
+  // Group Students by Class
+  const classStudentMap = useMemo(() => {
+    const map: Record<string, Student[]> = {};
+    activeClassNames.forEach((c) => {
+      map[c] = [];
+    });
+
+    students.forEach((s) => {
+      const clsName = s.class || activeClassNames[0] || "Class PG";
+      const matched = activeClassNames.find((ac) => isSameClass(clsName, ac)) || clsName;
+      if (!map[matched]) map[matched] = [];
+      map[matched].push(s);
+    });
+
+    return map;
+  }, [students, activeClassNames]);
+
+  const currentClassStudents = useMemo(() => {
+    if (!selectedClass) return [];
+    return classStudentMap[selectedClass] || [];
+  }, [selectedClass, classStudentMap]);
 
   const handleStatusChange = (id: string, status: "Present" | "Absent" | "Late" | "Leave") => {
     setAttendanceState((prev) => ({ ...prev, [id]: status }));
@@ -64,7 +91,7 @@ export const AttendanceModule: React.FC<AttendanceModuleProps> = ({
 
   const handleMarkAllPresent = () => {
     const next: Record<string, "Present" | "Absent" | "Late" | "Leave"> = {};
-    const targetList = attendanceMode === "students" ? filteredStudents : teachers;
+    const targetList = attendanceMode === "students" ? currentClassStudents : teachers;
     targetList.forEach((item) => {
       next[item.id] = "Present";
     });
@@ -75,7 +102,7 @@ export const AttendanceModule: React.FC<AttendanceModuleProps> = ({
     setIsSaving(true);
     try {
       const recordsToSave: AttendanceRecord[] = [];
-      const targetList = attendanceMode === "students" ? filteredStudents : teachers;
+      const targetList = attendanceMode === "students" ? currentClassStudents : teachers;
 
       targetList.forEach((item) => {
         const st = attendanceState[item.id] || "Present";
@@ -84,14 +111,14 @@ export const AttendanceModule: React.FC<AttendanceModuleProps> = ({
           id: `att_${item.id}_${todayDateStr}`,
           student_id: item.id,
           student_name: studentName,
-          class: attendanceMode === "students" ? selectedClass : "Faculty",
+          class: attendanceMode === "students" ? (selectedClass || "General") : "Faculty",
           date: todayDateStr,
           status: st
         });
       });
 
       await onSaveAttendance(recordsToSave);
-      setSuccessMessage("✅ Attendance successfully saved!");
+      setSuccessMessage("✅ Daily Attendance successfully saved & recorded!");
       setTimeout(() => setSuccessMessage(""), 3500);
     } catch (err) {
       console.error("Attendance save failed:", err);
@@ -106,10 +133,10 @@ export const AttendanceModule: React.FC<AttendanceModuleProps> = ({
       <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-heading font-extrabold text-white flex items-center gap-2.5">
-            <UserCheck className="w-6 h-6 text-amber-400" /> Daily Attendance Manager
+            <UserCheck className="w-6 h-6 text-amber-400" /> Daily Attendance Register
           </h2>
           <p className="text-xs text-slate-400 mt-1">
-            Mark daily Present, Absent, Late, or Leave status for students & faculty members.
+            Select a class to mark daily student attendance or switch to teacher attendance.
           </p>
         </div>
 
@@ -121,20 +148,26 @@ export const AttendanceModule: React.FC<AttendanceModuleProps> = ({
 
           <div className="flex items-center bg-slate-950 p-1 border border-slate-800 rounded-xl text-xs">
             <button
-              onClick={() => setAttendanceMode("students")}
-              className={`px-3 py-1.5 rounded-lg font-bold transition-all ${
-                attendanceMode === "students" ? "bg-amber-500 text-slate-950" : "text-slate-400 hover:text-white"
+              onClick={() => {
+                setAttendanceMode("students");
+                setSelectedClass(null);
+              }}
+              className={`px-3.5 py-1.5 rounded-lg font-bold transition-all ${
+                attendanceMode === "students" ? "bg-amber-500 text-slate-950 shadow-md" : "text-slate-400 hover:text-white"
               }`}
             >
-              Students
+              Class Students
             </button>
             <button
-              onClick={() => setAttendanceMode("teachers")}
-              className={`px-3 py-1.5 rounded-lg font-bold transition-all ${
-                attendanceMode === "teachers" ? "bg-amber-500 text-slate-950" : "text-slate-400 hover:text-white"
+              onClick={() => {
+                setAttendanceMode("teachers");
+                setSelectedClass(null);
+              }}
+              className={`px-3.5 py-1.5 rounded-lg font-bold transition-all ${
+                attendanceMode === "teachers" ? "bg-amber-500 text-slate-950 shadow-md" : "text-slate-400 hover:text-white"
               }`}
             >
-              Teachers
+              Faculty Teachers
             </button>
           </div>
         </div>
@@ -147,97 +180,197 @@ export const AttendanceModule: React.FC<AttendanceModuleProps> = ({
         </div>
       )}
 
-      {/* Mode Controls */}
-      {attendanceMode === "students" && (
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <Filter className="w-4 h-4 text-slate-400" />
-            <span className="text-xs text-slate-300 font-bold">Select Class:</span>
-            <select
-              value={selectedClass}
-              onChange={(e) => setSelectedClass(e.target.value)}
-              className="bg-slate-950 border border-slate-800 text-white rounded-xl px-3 py-2 text-xs font-bold focus:border-amber-400 focus:outline-none"
-            >
-              {activeClassNames.map((cls) => (
-                <option key={cls} value={cls}>{cls}</option>
-              ))}
-            </select>
+      {/* VIEW 1: CLASS SELECTION GRID (Nested Structure) */}
+      {attendanceMode === "students" && selectedClass === null && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-bold text-slate-300 flex items-center gap-2">
+              <School className="w-4 h-4 text-amber-400" /> Select a Class to Open Attendance Register:
+            </h3>
+            <span className="text-xs text-slate-500 font-mono">{activeClassNames.length} Classes Active</span>
           </div>
 
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleMarkAllPresent}
-              className="bg-slate-950 border border-slate-800 hover:border-emerald-500/40 text-emerald-400 text-xs font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-all"
-            >
-              <Check className="w-4 h-4" />
-              <span>Mark All Present</span>
-            </button>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {activeClassNames.map((clsName) => {
+              const classStudents = classStudentMap[clsName] || [];
+              const todayLogForClass = attendanceLogs.filter((l) => isSameClass(l.class, clsName) && l.date === todayDateStr);
+              const isMarked = todayLogForClass.length > 0;
 
-            <button
-              onClick={handleSaveSubmit}
-              disabled={isSaving}
-              className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs px-4 py-2 rounded-xl flex items-center gap-2 shadow-lg disabled:opacity-50"
-            >
-              <Save className="w-4 h-4" />
-              <span>{isSaving ? "Saving..." : "Save Attendance"}</span>
-            </button>
+              return (
+                <div
+                  key={clsName}
+                  onClick={() => setSelectedClass(clsName)}
+                  className="bg-slate-900 border border-slate-800 hover:border-amber-500/50 rounded-2xl p-5 shadow-xl cursor-pointer group transition-all hover:scale-[1.02] flex flex-col justify-between space-y-4"
+                >
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-amber-400 font-mono bg-amber-500/10 border border-amber-500/20 px-2.5 py-0.5 rounded-full">
+                        {clsName}
+                      </span>
+                      {isMarked ? (
+                        <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md flex items-center gap-1">
+                          <Check className="w-3 h-3" /> Marked
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-bold text-slate-400 bg-slate-800 px-2 py-0.5 rounded-md">
+                          Pending
+                        </span>
+                      )}
+                    </div>
+                    <h4 className="text-base font-extrabold text-white group-hover:text-amber-400 transition-colors pt-1">
+                      {clsName}
+                    </h4>
+                  </div>
+
+                  <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+                    <span className="flex items-center gap-1 font-mono font-bold text-slate-300">
+                      <Users className="w-3.5 h-3.5 text-slate-400" /> {classStudents.length} Students
+                    </span>
+                    <span className="text-amber-400 font-bold flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                      Open <ChevronRight className="w-3.5 h-3.5" />
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
 
-      {/* Attendance Table */}
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
-        <table className="w-full text-left text-xs text-slate-300">
-          <thead className="bg-slate-950 text-slate-400 font-bold uppercase tracking-wider text-[11px] border-b border-slate-800">
-            <tr>
-              <th className="py-4 px-4">SR / Roll No</th>
-              <th className="py-4 px-4">Name</th>
-              <th className="py-4 px-4">Class / Role</th>
-              <th className="py-4 px-4 text-center">Status Selection</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-800/60">
-            {(attendanceMode === "students" ? filteredStudents : teachers).map((item) => {
-              const currentStatus = attendanceState[item.id] || "Present";
-              const itemName = (item as Student).student_name || item.name;
-              const itemSub = (item as Student).admission_no || (item as Teacher).emp_id || item.id.substring(0, 6);
+      {/* VIEW 2: MARK CLASS ATTENDANCE REGISTER */}
+      {(attendanceMode === "teachers" || selectedClass !== null) && (
+        <div className="space-y-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              {attendanceMode === "students" && (
+                <button
+                  onClick={() => setSelectedClass(null)}
+                  className="bg-slate-950 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all"
+                >
+                  <ArrowLeft className="w-4 h-4 text-amber-400" />
+                  <span>Back to Class List</span>
+                </button>
+              )}
 
-              return (
-                <tr key={item.id} className="hover:bg-slate-800/40 transition-colors">
-                  <td className="py-4 px-4 font-mono font-bold text-amber-400">{itemSub}</td>
-                  <td className="py-4 px-4 font-extrabold text-white">{itemName}</td>
-                  <td className="py-4 px-4 text-slate-400">
-                    {attendanceMode === "students" ? (item as Student).class : (item as Teacher).designation}
-                  </td>
-                  <td className="py-4 px-4">
-                    <div className="flex items-center justify-center gap-2">
-                      {(["Present", "Absent", "Late", "Leave"] as const).map((st) => {
-                        const isSelected = currentStatus === st;
-                        const badgeColors = {
-                          Present: isSelected ? "bg-emerald-500 text-slate-950 font-extrabold" : "bg-slate-950 text-slate-400 border border-slate-800 hover:text-white",
-                          Absent: isSelected ? "bg-red-500 text-white font-extrabold" : "bg-slate-950 text-slate-400 border border-slate-800 hover:text-white",
-                          Late: isSelected ? "bg-amber-500 text-slate-950 font-extrabold" : "bg-slate-950 text-slate-400 border border-slate-800 hover:text-white",
-                          Leave: isSelected ? "bg-blue-500 text-white font-extrabold" : "bg-slate-950 text-slate-400 border border-slate-800 hover:text-white"
-                        };
+              <div className="text-sm font-bold text-white flex items-center gap-2">
+                <span className="text-slate-400">Marking Attendance for:</span>
+                <span className="text-amber-400 font-mono text-base font-extrabold bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-xl">
+                  {attendanceMode === "students" ? selectedClass : "Faculty & Staff"}
+                </span>
+              </div>
+            </div>
 
-                        return (
-                          <button
-                            key={st}
-                            onClick={() => handleStatusChange(item.id, st)}
-                            className={`px-3 py-1.5 rounded-xl text-xs transition-all ${badgeColors[st]}`}
-                          >
-                            {st}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleMarkAllPresent}
+                className="bg-slate-950 border border-slate-800 hover:border-emerald-500/40 text-emerald-400 text-xs font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-all"
+              >
+                <Check className="w-4 h-4" />
+                <span>Mark All Present</span>
+              </button>
+
+              <button
+                onClick={handleSaveSubmit}
+                disabled={isSaving}
+                className="bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-extrabold px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-md transition-all disabled:opacity-50"
+              >
+                <Save className="w-4 h-4" />
+                <span>{isSaving ? "Saving..." : "Save Attendance"}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Student/Teacher Attendance Marking Table */}
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+            {((attendanceMode === "students" ? currentClassStudents : teachers).length === 0) ? (
+              <div className="p-12 text-center text-slate-500 space-y-2">
+                <Users className="w-10 h-10 mx-auto text-slate-600" />
+                <p className="text-sm font-bold">No records found for this register.</p>
+                <p className="text-xs">Add students to {selectedClass} in Student Management page.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs text-slate-300">
+                  <thead className="bg-slate-950 text-slate-400 font-bold uppercase border-b border-slate-800 text-[11px]">
+                    <tr>
+                      <th className="py-3.5 px-4">#</th>
+                      <th className="py-3.5 px-4">Name</th>
+                      <th className="py-3.5 px-4">Roll / ID</th>
+                      <th className="py-3.5 px-4">Class / Dept</th>
+                      <th className="py-3.5 px-4 text-center">Attendance Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60">
+                    {(attendanceMode === "students" ? currentClassStudents : teachers).map((item, idx) => {
+                      const currentStatus = attendanceState[item.id] || "Present";
+                      const titleName = (item as Student).student_name || item.name;
+                      const codeNo = (item as Student).roll_no || (item as Teacher).emp_id || (item as Student).admission_no || `ID-${idx + 1}`;
+                      const subText = (item as Student).class || (item as Teacher).designation || "General";
+
+                      return (
+                        <tr key={item.id} className="hover:bg-slate-800/40 transition-colors">
+                          <td className="py-3 px-4 font-mono text-slate-400">{idx + 1}</td>
+                          <td className="py-3 px-4 font-bold text-white text-sm">{titleName}</td>
+                          <td className="py-3 px-4 font-mono text-slate-400">{codeNo}</td>
+                          <td className="py-3 px-4 text-slate-300">{subText}</td>
+                          <td className="py-3 px-4 text-center">
+                            <div className="inline-flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 gap-1">
+                              <button
+                                type="button"
+                                onClick={() => handleStatusChange(item.id, "Present")}
+                                className={`px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition-all ${
+                                  currentStatus === "Present"
+                                    ? "bg-emerald-500 text-slate-950 shadow-md"
+                                    : "text-slate-400 hover:text-white"
+                                }`}
+                              >
+                                <CheckCircle className="w-3.5 h-3.5" /> Present
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleStatusChange(item.id, "Absent")}
+                                className={`px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition-all ${
+                                  currentStatus === "Absent"
+                                    ? "bg-rose-500 text-white shadow-md"
+                                    : "text-slate-400 hover:text-white"
+                                }`}
+                              >
+                                <XCircle className="w-3.5 h-3.5" /> Absent
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleStatusChange(item.id, "Late")}
+                                className={`px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition-all ${
+                                  currentStatus === "Late"
+                                    ? "bg-amber-500 text-slate-950 shadow-md"
+                                    : "text-slate-400 hover:text-white"
+                                }`}
+                              >
+                                <Clock className="w-3.5 h-3.5" /> Late
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleStatusChange(item.id, "Leave")}
+                                className={`px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition-all ${
+                                  currentStatus === "Leave"
+                                    ? "bg-blue-500 text-white shadow-md"
+                                    : "text-slate-400 hover:text-white"
+                                }`}
+                              >
+                                Leave
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -263,8 +263,17 @@ export const ClassManagementModule: React.FC<ClassManagementModuleProps> = ({
                 </thead>
                 <tbody className="divide-y divide-slate-800/60">
                   {classList.map((c) => {
-                    const studentCount = students.filter((s) => (s.class || "").toLowerCase().includes(c.name.toLowerCase())).length;
-                    const bookCount = books.filter((b) => (b.class_name || "").toLowerCase().includes(c.name.toLowerCase())).length;
+                    const studentCount = students.filter((s) => {
+                      const sc = (s.class || "").trim().toLowerCase().replace(/^class\s+/i, "").trim();
+                      const cc = (c.name || "").trim().toLowerCase().replace(/^class\s+/i, "").trim();
+                      return sc === cc;
+                    }).length;
+
+                    const bookCount = books.filter((b) => {
+                      const bc = (b.class_name || "").trim().toLowerCase().replace(/^class\s+/i, "").trim();
+                      const cc = (c.name || "").trim().toLowerCase().replace(/^class\s+/i, "").trim();
+                      return bc === cc;
+                    }).length;
 
                     return (
                       <tr key={c.id} className="hover:bg-slate-800/40 transition-colors">
