@@ -1,27 +1,59 @@
-import React, { useState } from "react";
-import { Student, ExamMarkRecord } from "../../lib/db";
+import React, { useState, useMemo } from "react";
+import { Student, ExamMarkRecord, ClassEntity } from "../../lib/db";
 import { FileSpreadsheet, Award, Printer, Search, Plus, Save, Sparkles } from "lucide-react";
 
 interface ExaminationsModuleProps {
   students: Student[];
   examMarks: ExamMarkRecord[];
+  classList?: ClassEntity[];
   onSaveMarks: (records: ExamMarkRecord[]) => Promise<void>;
   onSelectPrintReportCard: (student: Student) => void;
 }
 
+const DEFAULT_CLASSES = [
+  "Class PG",
+  "Class Nursery",
+  "Class LKG",
+  "Class UKG",
+  "Class I",
+  "Class II",
+  "Class III",
+  "Class IV",
+  "Class V",
+  "Class VI",
+  "Class VII",
+  "Class VIII",
+  "Class IX",
+  "Class X",
+  "Class XI (Science)",
+  "Class XI (Commerce)",
+  "Class XI (Arts)",
+  "Class XII (Science)",
+  "Class XII (Commerce)",
+  "Class XII (Arts)"
+];
+
 export const ExaminationsModule: React.FC<ExaminationsModuleProps> = ({
   students,
   examMarks,
+  classList,
   onSaveMarks,
   onSelectPrintReportCard
 }) => {
+  const activeClassNames = useMemo(() => {
+    if (classList && classList.length > 0) {
+      return classList.map((c) => c.name);
+    }
+    return DEFAULT_CLASSES;
+  }, [classList]);
+
   const [selectedClass, setSelectedClass] = useState("Class X");
   const [selectedExamTerm, setSelectedExamTerm] = useState("Half Yearly Examination 2026");
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredStudents = students.filter(
     (s) =>
-      (s.class || "Class Nursery") === selectedClass &&
+      (s.class || activeClassNames[0] || "Class PG") === selectedClass &&
       ((s.name || s.student_name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
         (s.admission_no || s.roll_no || "").toLowerCase().includes(searchQuery.toLowerCase()))
   );
@@ -45,12 +77,7 @@ export const ExaminationsModule: React.FC<ExaminationsModuleProps> = ({
             onChange={(e) => setSelectedClass(e.target.value)}
             className="bg-slate-950 border border-slate-800 text-white rounded-xl px-3.5 py-2.5 text-xs font-bold focus:border-amber-400 focus:outline-none"
           >
-            {[
-              "Class Nursery", "Class LKG", "Class UKG", "Class I", "Class II", "Class III",
-              "Class IV", "Class V", "Class VI", "Class VII", "Class VIII", "Class IX", "Class X",
-              "Class XI (Science)", "Class XI (Commerce)", "Class XI (Arts)",
-              "Class XII (Science)", "Class XII (Commerce)", "Class XII (Arts)"
-            ].map((cls) => (
+            {activeClassNames.map((cls) => (
               <option key={cls} value={cls}>{cls}</option>
             ))}
           </select>

@@ -1,20 +1,52 @@
-import React, { useState } from "react";
-import { Student, Teacher, AttendanceRecord } from "../../lib/db";
+import React, { useState, useMemo } from "react";
+import { Student, Teacher, AttendanceRecord, ClassEntity } from "../../lib/db";
 import { UserCheck, Calendar, Filter, Save, CheckCircle, XCircle, Clock, Check } from "lucide-react";
 
 interface AttendanceModuleProps {
   students: Student[];
   teachers: Teacher[];
   attendanceLogs: AttendanceRecord[];
+  classList?: ClassEntity[];
   onSaveAttendance: (records: AttendanceRecord[]) => Promise<void>;
 }
+
+const DEFAULT_CLASSES = [
+  "Class PG",
+  "Class Nursery",
+  "Class LKG",
+  "Class UKG",
+  "Class I",
+  "Class II",
+  "Class III",
+  "Class IV",
+  "Class V",
+  "Class VI",
+  "Class VII",
+  "Class VIII",
+  "Class IX",
+  "Class X",
+  "Class XI (Science)",
+  "Class XI (Commerce)",
+  "Class XI (Arts)",
+  "Class XII (Science)",
+  "Class XII (Commerce)",
+  "Class XII (Arts)"
+];
 
 export const AttendanceModule: React.FC<AttendanceModuleProps> = ({
   students,
   teachers,
   attendanceLogs,
+  classList,
   onSaveAttendance
 }) => {
+  const activeClassNames = useMemo(() => {
+    if (classList && classList.length > 0) {
+      return classList.map((c) => c.name);
+    }
+    return DEFAULT_CLASSES;
+  }, [classList]);
+
   const todayDateStr = new Date().toISOString().split("T")[0];
   const [selectedClass, setSelectedClass] = useState("Class X");
   const [attendanceMode, setAttendanceMode] = useState<"students" | "teachers">("students");
@@ -24,7 +56,7 @@ export const AttendanceModule: React.FC<AttendanceModuleProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
 
-  const filteredStudents = students.filter((s) => (s.class || "Class Nursery") === selectedClass);
+  const filteredStudents = students.filter((s) => (s.class || activeClassNames[0] || "Class PG") === selectedClass);
 
   const handleStatusChange = (id: string, status: "Present" | "Absent" | "Late" | "Leave") => {
     setAttendanceState((prev) => ({ ...prev, [id]: status }));
@@ -126,12 +158,7 @@ export const AttendanceModule: React.FC<AttendanceModuleProps> = ({
               onChange={(e) => setSelectedClass(e.target.value)}
               className="bg-slate-950 border border-slate-800 text-white rounded-xl px-3 py-2 text-xs font-bold focus:border-amber-400 focus:outline-none"
             >
-              {[
-                "Class Nursery", "Class LKG", "Class UKG", "Class I", "Class II", "Class III",
-                "Class IV", "Class V", "Class VI", "Class VII", "Class VIII", "Class IX", "Class X",
-                "Class XI (Science)", "Class XI (Commerce)", "Class XI (Arts)",
-                "Class XII (Science)", "Class XII (Commerce)", "Class XII (Arts)"
-              ].map((cls) => (
+              {activeClassNames.map((cls) => (
                 <option key={cls} value={cls}>{cls}</option>
               ))}
             </select>

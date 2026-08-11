@@ -365,6 +365,7 @@ export const Dashboard: React.FC = () => {
             students={students}
             teachers={teachers}
             attendanceLogs={attendanceLogs}
+            classList={classList}
             onSaveAttendance={handleSaveAttendance}
           />
         )}
@@ -373,6 +374,7 @@ export const Dashboard: React.FC = () => {
           <ExaminationsModule
             students={students}
             examMarks={examMarks}
+            classList={classList}
             onSaveMarks={async () => {}}
             onSelectPrintReportCard={setReportCardStudent}
           />
