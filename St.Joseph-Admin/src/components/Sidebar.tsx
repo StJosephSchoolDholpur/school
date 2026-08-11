@@ -17,12 +17,14 @@ import {
   UserCheck,
   FileSpreadsheet,
   Receipt,
-  UserCog
+  UserCog,
+  Layers
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 export type AdminTab =
   | "overview"
+  | "classes"
   | "attendance"
   | "examinations"
   | "fee_collections"
@@ -55,6 +57,7 @@ export const Sidebar: React.FC = () => {
 
   const menuItems: MenuItem[] = [
     { id: "overview", path: "/", label: "Dashboard Overview", icon: LayoutDashboard },
+    { id: "classes", path: "/classes", label: "Class Master Setup", icon: Layers, badge: "Master" },
     { id: "students", path: "/students", label: "Class-Wise Students", icon: Users },
     { id: "teachers", path: "/teachers", label: "Teachers Directory", icon: GraduationCap },
     { id: "attendance", path: "/attendance", label: "Daily Attendance", icon: UserCheck, badge: "Live" },

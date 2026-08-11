@@ -236,6 +236,15 @@ export interface BookItem {
   publisher?: string;
 }
 
+export interface ClassEntity {
+  id: string;
+  name: string;
+  code?: string;
+  stream?: string;
+  display_order?: number;
+  is_active?: boolean;
+}
+
 export interface AchievementItem {
   id: string;
   title: string;
@@ -1690,4 +1699,67 @@ export async function saveFeeCollectionRecord(receipt: Omit<FeeReceiptRecord, "i
     console.warn("Supabase saveFeeCollectionRecord error", e);
   }
   return newReceipt;
+}
+
+export const initialClasses: ClassEntity[] = [
+  { id: "cls_1", name: "Class Nursery", code: "NUR", stream: "General", display_order: 1, is_active: true },
+  { id: "cls_2", name: "Class LKG", code: "LKG", stream: "General", display_order: 2, is_active: true },
+  { id: "cls_3", name: "Class UKG", code: "UKG", stream: "General", display_order: 3, is_active: true },
+  { id: "cls_4", name: "Class I", code: "1", stream: "General", display_order: 4, is_active: true },
+  { id: "cls_5", name: "Class II", code: "2", stream: "General", display_order: 5, is_active: true },
+  { id: "cls_6", name: "Class III", code: "3", stream: "General", display_order: 6, is_active: true },
+  { id: "cls_7", name: "Class IV", code: "4", stream: "General", display_order: 7, is_active: true },
+  { id: "cls_8", name: "Class V", code: "5", stream: "General", display_order: 8, is_active: true },
+  { id: "cls_9", name: "Class VI", code: "6", stream: "General", display_order: 9, is_active: true },
+  { id: "cls_10", name: "Class VII", code: "7", stream: "General", display_order: 10, is_active: true },
+  { id: "cls_11", name: "Class VIII", code: "8", stream: "General", display_order: 11, is_active: true },
+  { id: "cls_12", name: "Class IX", code: "9", stream: "General", display_order: 12, is_active: true },
+  { id: "cls_13", name: "Class X", code: "10", stream: "General", display_order: 13, is_active: true },
+  { id: "cls_14", name: "Class XI (Science)", code: "11-SCI", stream: "Science", display_order: 14, is_active: true },
+  { id: "cls_15", name: "Class XI (Commerce)", code: "11-COM", stream: "Commerce", display_order: 15, is_active: true },
+  { id: "cls_16", name: "Class XI (Arts)", code: "11-ART", stream: "Arts", display_order: 16, is_active: true },
+  { id: "cls_17", name: "Class XII (Science)", code: "12-SCI", stream: "Science", display_order: 17, is_active: true },
+  { id: "cls_18", name: "Class XII (Commerce)", code: "12-COM", stream: "Commerce", display_order: 18, is_active: true },
+  { id: "cls_19", name: "Class XII (Arts)", code: "12-ART", stream: "Arts", display_order: 19, is_active: true }
+];
+
+export async function fetchClasses(): Promise<ClassEntity[]> {
+  try {
+    const { data, error } = await supabase.from("classes").select("*").order("display_order", { ascending: true });
+    if (!error && data && data.length > 0) return data;
+  } catch (e) {
+    console.warn("Supabase fetchClasses error", e);
+  }
+  return initialClasses;
+}
+
+export async function saveClass(item: Omit<ClassEntity, "id"> & { id?: string }): Promise<ClassEntity> {
+  const payload: any = {
+    name: item.name,
+    code: item.code || item.name.replace(/class/i, "").trim(),
+    stream: item.stream || "General",
+    display_order: item.display_order ?? 99,
+    is_active: item.is_active ?? true
+  };
+
+  if (item.id && !item.id.startsWith("cls_")) {
+    payload.id = item.id;
+  }
+
+  try {
+    const { data, error } = await supabase.from("classes").upsert([payload]).select().single();
+    if (error) console.warn("Supabase class save error:", error);
+    if (data?.id) return { ...item, id: data.id };
+  } catch (e) {
+    console.warn("Supabase saveClass exception", e);
+  }
+  return { ...item, id: item.id || `cls_${Date.now()}` };
+}
+
+export async function deleteClass(id: string): Promise<void> {
+  try {
+    await supabase.from("classes").delete().eq("id", id);
+  } catch (e) {
+    console.warn("Supabase deleteClass error", e);
+  }
 }

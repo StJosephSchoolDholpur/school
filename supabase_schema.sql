@@ -107,6 +107,17 @@ CREATE TABLE IF NOT EXISTS public.books (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+-- 9. CLASSES MASTER TABLE
+CREATE TABLE IF NOT EXISTS public.classes (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE,
+    code TEXT,
+    stream TEXT DEFAULT 'General',
+    display_order INT DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
 -- Enable Row Level Security (RLS) & Grant Public Read Access for website
 ALTER TABLE public.teachers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.students ENABLE ROW LEVEL SECURITY;
@@ -116,6 +127,7 @@ ALTER TABLE public.transportation ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.mandatory_disclosures ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.fee_collections ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.books ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.classes ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Public Read Access Teachers" ON public.teachers FOR SELECT USING (true);
 CREATE POLICY "Public Read Access Students" ON public.students FOR SELECT USING (true);
@@ -125,6 +137,7 @@ CREATE POLICY "Public Read Access Transport" ON public.transportation FOR SELECT
 CREATE POLICY "Public Read Access Mandatory" ON public.mandatory_disclosures FOR SELECT USING (true);
 CREATE POLICY "Public Read Access Fee Collections" ON public.fee_collections FOR SELECT USING (true);
 CREATE POLICY "Public Read Access Books" ON public.books FOR SELECT USING (true);
+CREATE POLICY "Public Read Access Classes" ON public.classes FOR SELECT USING (true);
 
 -- Grant All Access Policies for Admin Operations
 CREATE POLICY "Full Access Teachers" ON public.teachers FOR ALL USING (true) WITH CHECK (true);
@@ -135,6 +148,7 @@ CREATE POLICY "Full Access Transport" ON public.transportation FOR ALL USING (tr
 CREATE POLICY "Full Access Mandatory" ON public.mandatory_disclosures FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Full Access Fee Collections" ON public.fee_collections FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Full Access Books" ON public.books FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Full Access Classes" ON public.classes FOR ALL USING (true) WITH CHECK (true);
 
 -- 7. INITIAL SAMPLE DATA SEEDING
 INSERT INTO public.teachers (name, designation, department, dob, wishes) VALUES

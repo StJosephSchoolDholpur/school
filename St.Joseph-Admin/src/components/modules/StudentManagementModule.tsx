@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { Student } from "../../lib/db";
+import { Student, ClassEntity } from "../../lib/db";
 import {
   Users,
   Search,
@@ -15,12 +15,13 @@ import {
 
 interface StudentManagementModuleProps {
   students: Student[];
+  classList?: ClassEntity[];
   onSaveStudent: (student: Omit<Student, "id"> & { id?: string }) => Promise<void>;
   onDeleteStudent: (id: string) => Promise<void>;
   onOpenAdmissionModal: () => void;
 }
 
-const ALL_CLASSES = [
+const DEFAULT_CLASSES = [
   "Class Nursery",
   "Class LKG",
   "Class UKG",
@@ -44,10 +45,18 @@ const ALL_CLASSES = [
 
 export const StudentManagementModule: React.FC<StudentManagementModuleProps> = ({
   students,
+  classList,
   onSaveStudent,
   onDeleteStudent,
   onOpenAdmissionModal
 }) => {
+  const activeClassNames = useMemo(() => {
+    if (classList && classList.length > 0) {
+      return classList.map((c) => c.name);
+    }
+    return DEFAULT_CLASSES;
+  }, [classList]);
+
   const [selectedClass, setSelectedClass] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [sectionFilter, setSectionFilter] = useState("All");
@@ -66,8 +75,8 @@ export const StudentManagementModule: React.FC<StudentManagementModuleProps> = (
   const classStats = useMemo(() => {
     const map: Record<string, { total: number; sections: Set<string>; students: Student[] }> = {};
 
-    // Initialize all default classes
-    ALL_CLASSES.forEach((c) => {
+    // Initialize all active classes
+    activeClassNames.forEach((c) => {
       map[c] = { total: 0, sections: new Set(["A"]), students: [] };
     });
 
@@ -83,7 +92,7 @@ export const StudentManagementModule: React.FC<StudentManagementModuleProps> = (
     });
 
     return map;
-  }, [students]);
+  }, [students, activeClassNames]);
 
   // Filtered Students for the selected class view
   const currentClassStudents = useMemo(() => {
@@ -176,7 +185,7 @@ export const StudentManagementModule: React.FC<StudentManagementModuleProps> = (
 
           {/* Grid of Class Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-            {ALL_CLASSES.map((clsName) => {
+            {activeClassNames.map((clsName) => {
               const stat = classStats[clsName] || { total: 0, sections: new Set(["A"]), students: [] };
               const sectionsList = Array.from(stat.sections).join(", ");
 

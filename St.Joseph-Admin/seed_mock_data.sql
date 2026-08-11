@@ -261,11 +261,46 @@ INSERT INTO public.transportation (
 ('Ondela Road & RAC Line Route', 'RJ-11-PA-103', 'Ondela Chauraha, RAC Battalion Gate, Water Tank, City Hospital', '07:10 AM', '02:20 PM', 'Mr. Satish Kumar', '+91 98293-33445', '1,250', 'live'),
 ('Bari Road & Housing Board Route', 'RJ-11-PA-104', 'Bari Road, Housing Board Colony, Rajakhera Bypass, Sai Mandir', '07:20 AM', '02:30 PM', 'Mr. Jaswant Gurjar', '+91 98294-44556', '1,400', 'live');
 
--- 7. VERIFY ROW COUNTS IN ALL TABLES
+-- 7. INSERT MOCK CLASSES MASTER
+CREATE TABLE IF NOT EXISTS public.classes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL UNIQUE,
+    code TEXT,
+    stream TEXT DEFAULT 'General',
+    display_order INT DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+INSERT INTO public.classes (name, code, stream, display_order) VALUES
+('Class Nursery', 'NUR', 'General', 1),
+('Class LKG', 'LKG', 'General', 2),
+('Class UKG', 'UKG', 'General', 3),
+('Class I', '1', 'General', 4),
+('Class II', '2', 'General', 5),
+('Class III', '3', 'General', 6),
+('Class IV', '4', 'General', 7),
+('Class V', '5', 'General', 8),
+('Class VI', '6', 'General', 9),
+('Class VII', '7', 'General', 10),
+('Class VIII', '8', 'General', 11),
+('Class IX', '9', 'General', 12),
+('Class X', '10', 'General', 13),
+('Class XI (Science)', '11-SCI', 'Science', 14),
+('Class XI (Commerce)', '11-COM', 'Commerce', 15),
+('Class XI (Arts)', '11-ART', 'Arts', 16),
+('Class XII (Science)', '12-SCI', 'Science', 17),
+('Class XII (Commerce)', '12-COM', 'Commerce', 18),
+('Class XII (Arts)', '12-ART', 'Arts', 19)
+ON CONFLICT (name) DO NOTHING;
+
+-- 8. VERIFY ROW COUNTS IN ALL TABLES
 SELECT 'students' AS table_name, COUNT(*) FROM public.students
 UNION ALL
 SELECT 'teachers' AS table_name, COUNT(*) FROM public.teachers
 UNION ALL
 SELECT 'tc_records' AS table_name, COUNT(*) FROM public.tc_records
 UNION ALL
-SELECT 'transportation' AS table_name, COUNT(*) FROM public.transportation;
+SELECT 'transportation' AS table_name, COUNT(*) FROM public.transportation
+UNION ALL
+SELECT 'classes' AS table_name, COUNT(*) FROM public.classes;

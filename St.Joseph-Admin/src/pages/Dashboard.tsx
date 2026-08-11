@@ -57,7 +57,11 @@ import {
   BookItem,
   AchievementItem,
   GalleryItem,
-  CalendarEvent
+  CalendarEvent,
+  ClassEntity,
+  fetchClasses,
+  saveClass,
+  deleteClass
 } from "../lib/db";
 
 // Modular Sub-Components for All Pages
@@ -78,6 +82,7 @@ import { AchievementsModule } from "../components/modules/AchievementsModule";
 import { GalleryModule } from "../components/modules/GalleryModule";
 import { CalendarModule } from "../components/modules/CalendarModule";
 import { RbacModule } from "../components/modules/RbacModule";
+import { ClassManagementModule } from "../components/modules/ClassManagementModule";
 import { PrintReportCardModal, PrintFeeReceiptModal } from "../components/modules/PrintModals";
 
 export const Dashboard: React.FC = () => {
@@ -87,6 +92,7 @@ export const Dashboard: React.FC = () => {
   // State Stores
   const [tcs, setTcs] = useState<TCRecordData[]>([]);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [classList, setClassList] = useState<ClassEntity[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [fees, setFees] = useState<FeeSection[]>([]);
   const [routes, setRoutes] = useState<TransportRoute[]>([]);
@@ -110,6 +116,7 @@ export const Dashboard: React.FC = () => {
   const loadData = async () => {
     try {
       const [
+        fetchedClasses,
         fetchedTcs,
         fetchedTeachers,
         fetchedStudents,
@@ -126,6 +133,7 @@ export const Dashboard: React.FC = () => {
         fetchedMarks,
         fetchedReceipts
       ] = await Promise.all([
+        fetchClasses(),
         fetchTCs(),
         fetchTeachers(),
         fetchStudents(),
@@ -143,6 +151,7 @@ export const Dashboard: React.FC = () => {
         fetchFeeCollections()
       ]);
 
+      setClassList(fetchedClasses);
       setTcs(fetchedTcs);
       setTeachers(fetchedTeachers);
       setStudents(fetchedStudents);
@@ -293,6 +302,16 @@ export const Dashboard: React.FC = () => {
     await loadData();
   };
 
+  const handleSaveClass = async (c: Omit<ClassEntity, "id"> & { id?: string }) => {
+    await saveClass(c);
+    await loadData();
+  };
+
+  const handleDeleteClass = async (id: string) => {
+    await deleteClass(id);
+    await loadData();
+  };
+
   const path = location.pathname;
 
   return (
@@ -313,9 +332,20 @@ export const Dashboard: React.FC = () => {
           />
         )}
 
+        {path === "/classes" && (
+          <ClassManagementModule
+            classList={classList}
+            students={students}
+            books={booksList}
+            onSaveClass={handleSaveClass}
+            onDeleteClass={handleDeleteClass}
+          />
+        )}
+
         {path === "/students" && (
           <StudentManagementModule
             students={students}
+            classList={classList}
             onSaveStudent={handleSaveStudent}
             onDeleteStudent={handleDeleteStudent}
             onOpenAdmissionModal={() => setIsAdmissionModalOpen(true)}

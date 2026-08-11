@@ -1,14 +1,15 @@
 import React, { useState, useMemo } from "react";
-import { BookItem } from "../../lib/db";
+import { BookItem, ClassEntity } from "../../lib/db";
 import { BookOpen, Plus, Trash2, Search, ArrowRight, BookMarked, Sparkles } from "lucide-react";
 
 interface BooksModuleProps {
   books: BookItem[];
+  classList?: ClassEntity[];
   onSaveBook: (book: Omit<BookItem, "id"> & { id?: string }) => Promise<void>;
   onDeleteBook: (id: string) => Promise<void>;
 }
 
-const ALL_CLASSES = [
+const DEFAULT_CLASSES = [
   "Class Nursery",
   "Class LKG",
   "Class UKG",
@@ -70,7 +71,14 @@ const isSameClass = (clsA: string, clsB: string): boolean => {
   return clsA.toLowerCase().trim() === clsB.toLowerCase().trim();
 };
 
-export const BooksModule: React.FC<BooksModuleProps> = ({ books, onSaveBook, onDeleteBook }) => {
+export const BooksModule: React.FC<BooksModuleProps> = ({ books, classList, onSaveBook, onDeleteBook }) => {
+  const activeClassNames = useMemo(() => {
+    if (classList && classList.length > 0) {
+      return classList.map((c) => c.name);
+    }
+    return DEFAULT_CLASSES;
+  }, [classList]);
+
   const [selectedClass, setSelectedClass] = useState<string>("Class X");
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddingNew, setIsAddingNew] = useState(false);
@@ -86,7 +94,7 @@ export const BooksModule: React.FC<BooksModuleProps> = ({ books, onSaveBook, onD
   // Map books count per class using smart class matching
   const classBookCounts = useMemo(() => {
     const map: Record<string, number> = {};
-    ALL_CLASSES.forEach((c) => {
+    activeClassNames.forEach((c) => {
       map[c] = books.filter((b) => {
         const cls = b.class_name || (b as any).class || (b as any).className || "";
         return isSameClass(cls, c);
@@ -94,7 +102,7 @@ export const BooksModule: React.FC<BooksModuleProps> = ({ books, onSaveBook, onD
     });
 
     return map;
-  }, [books]);
+  }, [books, activeClassNames]);
 
   // Filter books for current selected class
   const currentClassBooks = useMemo(() => {
@@ -162,11 +170,11 @@ export const BooksModule: React.FC<BooksModuleProps> = ({ books, onSaveBook, onD
             <h3 className="font-extrabold text-xs text-white uppercase tracking-wider flex items-center gap-2">
               <BookMarked className="w-4 h-4 text-amber-400" /> Select Class
             </h3>
-            <span className="text-[10px] font-bold text-slate-500">{ALL_CLASSES.length} Classes</span>
+            <span className="text-[10px] font-bold text-slate-500">{activeClassNames.length} Classes</span>
           </div>
 
           <div className="space-y-1.5">
-            {ALL_CLASSES.map((cls) => {
+            {activeClassNames.map((cls) => {
               const count = classBookCounts[cls] || 0;
               const isSelected = selectedClass === cls;
 
