@@ -111,6 +111,7 @@ export const Dashboard: React.FC = () => {
 
   // Modal & Print States
   const [isAdmissionModalOpen, setIsAdmissionModalOpen] = useState(false);
+  const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [reportCardStudent, setReportCardStudent] = useState<Student | null>(null);
   const [printReceipt, setPrintReceipt] = useState<FeeReceiptRecord | null>(null);
 
@@ -363,7 +364,14 @@ export const Dashboard: React.FC = () => {
             classList={classList}
             onSaveStudent={handleSaveStudent}
             onDeleteStudent={handleDeleteStudent}
-            onOpenAdmissionModal={() => setIsAdmissionModalOpen(true)}
+            onOpenAdmissionModal={() => {
+              setEditingStudent(null);
+              setIsAdmissionModalOpen(true);
+            }}
+            onEditStudent={(s) => {
+              setEditingStudent(s);
+              setIsAdmissionModalOpen(true);
+            }}
           />
         )}
 
@@ -490,9 +498,13 @@ export const Dashboard: React.FC = () => {
         {/* Multi-Step Admission Registration Modal */}
         <StudentAdmissionModal
           isOpen={isAdmissionModalOpen}
-          onClose={() => setIsAdmissionModalOpen(false)}
+          onClose={() => {
+            setIsAdmissionModalOpen(false);
+            setEditingStudent(null);
+          }}
           classList={classList}
           onSaveStudent={handleSaveStudent}
+          editingStudent={editingStudent}
         />
 
         {/* Report Card & Fee Receipt Print Modals */}

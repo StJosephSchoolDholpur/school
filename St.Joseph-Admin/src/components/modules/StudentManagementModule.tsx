@@ -6,6 +6,7 @@ import {
   Plus,
   ArrowLeft,
   Trash2,
+  Edit3,
   Phone,
   UserCheck,
   Filter,
@@ -19,6 +20,7 @@ interface StudentManagementModuleProps {
   onSaveStudent: (student: Omit<Student, "id"> & { id?: string }) => Promise<void>;
   onDeleteStudent: (id: string) => Promise<void>;
   onOpenAdmissionModal: () => void;
+  onEditStudent?: (student: Student) => void;
 }
 
 const DEFAULT_CLASSES = [
@@ -85,7 +87,8 @@ export const StudentManagementModule: React.FC<StudentManagementModuleProps> = (
   classList,
   onSaveStudent,
   onDeleteStudent,
-  onOpenAdmissionModal
+  onOpenAdmissionModal,
+  onEditStudent
 }) => {
   const activeClassNames = useMemo(() => {
     if (classList && classList.length > 0) {
@@ -475,17 +478,28 @@ export const StudentManagementModule: React.FC<StudentManagementModuleProps> = (
                             </span>
                           </td>
                           <td className="py-4 px-4 text-right">
-                            <button
-                              onClick={() => {
-                                if (confirm(`Are you sure you want to delete ${studentName}?`)) {
-                                  onDeleteStudent(student.id);
-                                }
-                              }}
-                              className="p-2 text-slate-400 hover:text-red-400 bg-slate-950 hover:bg-red-500/10 rounded-xl border border-slate-800 hover:border-red-500/30 transition-all"
-                              title="Delete Student Record"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                            <div className="flex items-center justify-end gap-2">
+                              {onEditStudent && (
+                                <button
+                                  onClick={() => onEditStudent(student)}
+                                  className="p-2 text-slate-400 hover:text-amber-400 bg-slate-950 hover:bg-amber-500/10 rounded-xl border border-slate-800 hover:border-amber-500/30 transition-all"
+                                  title="Edit Student Profile"
+                                >
+                                  <Edit3 className="w-4 h-4" />
+                                </button>
+                              )}
+                              <button
+                                onClick={() => {
+                                  if (confirm(`Are you sure you want to delete ${studentName}?`)) {
+                                    onDeleteStudent(student.id);
+                                  }
+                                }}
+                                className="p-2 text-slate-400 hover:text-red-400 bg-slate-950 hover:bg-red-500/10 rounded-xl border border-slate-800 hover:border-red-500/30 transition-all"
+                                title="Delete Student Record"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       );

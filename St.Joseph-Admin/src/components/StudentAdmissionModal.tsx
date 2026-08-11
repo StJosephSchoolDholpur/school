@@ -7,6 +7,7 @@ interface StudentAdmissionModalProps {
   onClose: () => void;
   classList?: ClassEntity[];
   onSaveStudent: (studentData: Partial<Student>) => Promise<void>;
+  editingStudent?: Partial<Student> | null;
 }
 
 const DEFAULT_CLASSES = [
@@ -36,6 +37,7 @@ export const StudentAdmissionModal: React.FC<StudentAdmissionModalProps> = ({
   onClose,
   classList,
   onSaveStudent,
+  editingStudent
 }) => {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [submitting, setSubmitting] = useState<boolean>(false);
@@ -118,10 +120,14 @@ export const StudentAdmissionModal: React.FC<StudentAdmissionModalProps> = ({
   // Reset form when modal opens
   useEffect(() => {
     if (isOpen) {
-      setFormData(getInitialFormData());
+      if (editingStudent) {
+        setFormData({ ...getInitialFormData(), ...editingStudent });
+      } else {
+        setFormData(getInitialFormData());
+      }
       setCurrentStep(1);
     }
-  }, [isOpen]);
+  }, [isOpen, editingStudent]);
 
   // Calculate age as of March 31st of the session year
   useEffect(() => {
