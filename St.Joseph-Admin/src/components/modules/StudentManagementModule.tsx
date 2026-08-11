@@ -22,6 +22,7 @@ interface StudentManagementModuleProps {
 }
 
 const DEFAULT_CLASSES = [
+  "Class PG",
   "Class Nursery",
   "Class LKG",
   "Class UKG",
@@ -42,6 +43,42 @@ const DEFAULT_CLASSES = [
   "Class XII (Commerce)",
   "Class XII (Arts)"
 ];
+
+const normalizeClassKey = (clsName: string): string => {
+  if (!clsName) return "";
+  let clean = clsName.toLowerCase().replace(/class/g, "").replace(/\s+/g, "").trim();
+  clean = clean.replace(/[-_][a-z0-9]/g, "");
+  clean = clean.replace(/\(science\)/g, "").replace(/\(commerce\)/g, "").replace(/\(arts\)/g, "");
+
+  const romanMap: Record<string, string> = {
+    "pg": "pg",
+    "nursery": "nursery",
+    "lkg": "lkg",
+    "ukg": "ukg",
+    "i": "1",
+    "ii": "2",
+    "iii": "3",
+    "iv": "4",
+    "v": "5",
+    "vi": "6",
+    "vii": "7",
+    "viii": "8",
+    "ix": "9",
+    "x": "10",
+    "xi": "11",
+    "xii": "12"
+  };
+
+  if (romanMap[clean]) return romanMap[clean];
+  return clean.replace(/st|nd|rd|th/g, "");
+};
+
+const isSameClass = (clsA: string, clsB: string): boolean => {
+  const normA = normalizeClassKey(clsA);
+  const normB = normalizeClassKey(clsB);
+  if (normA && normB && normA === normB) return true;
+  return clsA.toLowerCase().trim() === clsB.toLowerCase().trim();
+};
 
 export const StudentManagementModule: React.FC<StudentManagementModuleProps> = ({
   students,
@@ -71,7 +108,7 @@ export const StudentManagementModule: React.FC<StudentManagementModuleProps> = (
   });
   const [isAddingQuick, setIsAddingQuick] = useState(false);
 
-  // Group Students Class-Wise
+  // Group Students Class-Wise using smart class matching
   const classStats = useMemo(() => {
     const map: Record<string, { total: number; sections: Set<string>; students: Student[] }> = {};
 
@@ -82,13 +119,15 @@ export const StudentManagementModule: React.FC<StudentManagementModuleProps> = (
 
     // Populate with actual students
     students.forEach((s) => {
-      const clsName = s.class || "Class Nursery";
-      if (!map[clsName]) {
-        map[clsName] = { total: 0, sections: new Set(["A"]), students: [] };
+      const studentCls = s.class || "Class Nursery";
+      const matchedClass = activeClassNames.find((ac) => isSameClass(studentCls, ac)) || studentCls;
+
+      if (!map[matchedClass]) {
+        map[matchedClass] = { total: 0, sections: new Set(["A"]), students: [] };
       }
-      map[clsName].total += 1;
-      if (s.section) map[clsName].sections.add(s.section);
-      map[clsName].students.push(s);
+      map[matchedClass].total += 1;
+      if (s.section) map[matchedClass].sections.add(s.section);
+      map[matchedClass].students.push(s);
     });
 
     return map;

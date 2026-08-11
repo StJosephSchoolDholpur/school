@@ -10,6 +10,7 @@ interface BooksModuleProps {
 }
 
 const DEFAULT_CLASSES = [
+  "Class PG",
   "Class Nursery",
   "Class LKG",
   "Class UKG",
@@ -43,6 +44,7 @@ const normalizeClassKey = (clsName: string): string => {
   clean = clean.replace(/\(science\)/g, "").replace(/\(commerce\)/g, "").replace(/\(arts\)/g, "");
 
   const romanMap: Record<string, string> = {
+    "pg": "pg",
     "nursery": "nursery",
     "lkg": "lkg",
     "ukg": "ukg",

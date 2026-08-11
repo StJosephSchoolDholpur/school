@@ -273,25 +273,26 @@ CREATE TABLE IF NOT EXISTS public.classes (
 );
 
 INSERT INTO public.classes (name, code, stream, display_order) VALUES
-('Class Nursery', 'NUR', 'General', 1),
-('Class LKG', 'LKG', 'General', 2),
-('Class UKG', 'UKG', 'General', 3),
-('Class I', '1', 'General', 4),
-('Class II', '2', 'General', 5),
-('Class III', '3', 'General', 6),
-('Class IV', '4', 'General', 7),
-('Class V', '5', 'General', 8),
-('Class VI', '6', 'General', 9),
-('Class VII', '7', 'General', 10),
-('Class VIII', '8', 'General', 11),
-('Class IX', '9', 'General', 12),
-('Class X', '10', 'General', 13),
-('Class XI (Science)', '11-SCI', 'Science', 14),
-('Class XI (Commerce)', '11-COM', 'Commerce', 15),
-('Class XI (Arts)', '11-ART', 'Arts', 16),
-('Class XII (Science)', '12-SCI', 'Science', 17),
-('Class XII (Commerce)', '12-COM', 'Commerce', 18),
-('Class XII (Arts)', '12-ART', 'Arts', 19)
+('Class PG', 'PG', 'General', 1),
+('Class Nursery', 'NUR', 'General', 2),
+('Class LKG', 'LKG', 'General', 3),
+('Class UKG', 'UKG', 'General', 4),
+('Class I', '1', 'General', 5),
+('Class II', '2', 'General', 6),
+('Class III', '3', 'General', 7),
+('Class IV', '4', 'General', 8),
+('Class V', '5', 'General', 9),
+('Class VI', '6', 'General', 10),
+('Class VII', '7', 'General', 11),
+('Class VIII', '8', 'General', 12),
+('Class IX', '9', 'General', 13),
+('Class X', '10', 'General', 14),
+('Class XI (Science)', '11-SCI', 'Science', 15),
+('Class XI (Commerce)', '11-COM', 'Commerce', 16),
+('Class XI (Arts)', '11-ART', 'Arts', 17),
+('Class XII (Science)', '12-SCI', 'Science', 18),
+('Class XII (Commerce)', '12-COM', 'Commerce', 19),
+('Class XII (Arts)', '12-ART', 'Arts', 20)
 ON CONFLICT (name) DO NOTHING;
 
 -- 8. VERIFY ROW COUNTS IN ALL TABLES
