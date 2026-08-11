@@ -1728,6 +1728,22 @@ export async function fetchClasses(): Promise<ClassEntity[]> {
   try {
     const { data, error } = await supabase.from("classes").select("*").order("display_order", { ascending: true });
     if (!error && data && data.length > 0) return data;
+
+    // Auto-seed default classes into Supabase PostgreSQL when table is empty
+    if (!error && data && data.length === 0) {
+      const payload = initialClasses.map((c) => ({
+        name: c.name,
+        code: c.code,
+        stream: c.stream,
+        display_order: c.display_order,
+        is_active: true
+      }));
+
+      const { data: seededData, error: seedError } = await supabase.from("classes").upsert(payload, { onConflict: "name" }).select();
+      if (!seedError && seededData && seededData.length > 0) {
+        return seededData;
+      }
+    }
   } catch (e) {
     console.warn("Supabase fetchClasses error", e);
   }
