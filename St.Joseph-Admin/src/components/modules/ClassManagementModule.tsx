@@ -12,6 +12,43 @@ interface ClassManagementModuleProps {
   onClearClasses?: () => Promise<void>;
 }
 
+const normalizeClassKey = (clsName: string): string => {
+  if (!clsName) return "";
+  let clean = clsName.toLowerCase().replace(/class/g, "").replace(/\s+/g, "").trim();
+  clean = clean.replace(/[-_][a-z0-9]/g, "");
+  clean = clean.replace(/\(science\)/g, "").replace(/\(commerce\)/g, "").replace(/\(arts\)/g, "");
+
+  const romanMap: Record<string, string> = {
+    "pg": "pg",
+    "nursery": "nursery",
+    "lkg": "lkg",
+    "ukg": "ukg",
+    "i": "1",
+    "ii": "2",
+    "iii": "3",
+    "iv": "4",
+    "v": "5",
+    "vi": "6",
+    "vii": "7",
+    "viii": "8",
+    "ix": "9",
+    "x": "10",
+    "xi": "11",
+    "xii": "12"
+  };
+
+  if (romanMap[clean]) return romanMap[clean];
+  return clean.replace(/st|nd|rd|th/g, "");
+};
+
+const isSameClass = (clsA: string, clsB: string): boolean => {
+  if (!clsA || !clsB) return false;
+  const normA = normalizeClassKey(clsA);
+  const normB = normalizeClassKey(clsB);
+  if (normA && normB && normA === normB) return true;
+  return clsA.toLowerCase().trim() === clsB.toLowerCase().trim();
+};
+
 export const ClassManagementModule: React.FC<ClassManagementModuleProps> = ({
   classList,
   students,
@@ -263,17 +300,8 @@ export const ClassManagementModule: React.FC<ClassManagementModuleProps> = ({
                 </thead>
                 <tbody className="divide-y divide-slate-800/60">
                   {classList.map((c) => {
-                    const studentCount = students.filter((s) => {
-                      const sc = (s.class || "").trim().toLowerCase().replace(/^class\s+/i, "").trim();
-                      const cc = (c.name || "").trim().toLowerCase().replace(/^class\s+/i, "").trim();
-                      return sc === cc;
-                    }).length;
-
-                    const bookCount = books.filter((b) => {
-                      const bc = (b.class_name || "").trim().toLowerCase().replace(/^class\s+/i, "").trim();
-                      const cc = (c.name || "").trim().toLowerCase().replace(/^class\s+/i, "").trim();
-                      return bc === cc;
-                    }).length;
+                    const studentCount = students.filter((s) => isSameClass(s.class, c.name)).length;
+                    const bookCount = books.filter((b) => isSameClass(b.class_name, c.name)).length;
 
                     return (
                       <tr key={c.id} className="hover:bg-slate-800/40 transition-colors">

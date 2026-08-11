@@ -33,11 +33,41 @@ const DEFAULT_CLASSES = [
   "Class XII (Arts)"
 ];
 
+const normalizeClassKey = (clsName: string): string => {
+  if (!clsName) return "";
+  let clean = clsName.toLowerCase().replace(/class/g, "").replace(/\s+/g, "").trim();
+  clean = clean.replace(/[-_][a-z0-9]/g, "");
+  clean = clean.replace(/\(science\)/g, "").replace(/\(commerce\)/g, "").replace(/\(arts\)/g, "");
+
+  const romanMap: Record<string, string> = {
+    "pg": "pg",
+    "nursery": "nursery",
+    "lkg": "lkg",
+    "ukg": "ukg",
+    "i": "1",
+    "ii": "2",
+    "iii": "3",
+    "iv": "4",
+    "v": "5",
+    "vi": "6",
+    "vii": "7",
+    "viii": "8",
+    "ix": "9",
+    "x": "10",
+    "xi": "11",
+    "xii": "12"
+  };
+
+  if (romanMap[clean]) return romanMap[clean];
+  return clean.replace(/st|nd|rd|th/g, "");
+};
+
 const isSameClass = (clsA: string, clsB: string): boolean => {
   if (!clsA || !clsB) return false;
-  const cleanA = clsA.trim().toLowerCase().replace(/^class\s+/i, "").trim();
-  const cleanB = clsB.trim().toLowerCase().replace(/^class\s+/i, "").trim();
-  return cleanA === cleanB;
+  const normA = normalizeClassKey(clsA);
+  const normB = normalizeClassKey(clsB);
+  if (normA && normB && normA === normB) return true;
+  return clsA.toLowerCase().trim() === clsB.toLowerCase().trim();
 };
 
 export const AttendanceModule: React.FC<AttendanceModuleProps> = ({
