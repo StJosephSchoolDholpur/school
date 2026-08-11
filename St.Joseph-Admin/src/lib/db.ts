@@ -1089,7 +1089,10 @@ export async function seedInitialClasses(): Promise<ClassEntity[]> {
 }
 
 export async function saveClass(item: Omit<ClassEntity, "id"> & { id?: string }): Promise<ClassEntity> {
+  const classId = item.id || `cls_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+
   const payload: any = {
+    id: classId,
     name: item.name.trim(),
     code: item.code?.trim() || item.name.replace(/class/i, "").trim(),
     section: item.section || "A",
@@ -1098,10 +1101,6 @@ export async function saveClass(item: Omit<ClassEntity, "id"> & { id?: string })
     class_teacher_id: item.class_teacher_id || null,
     class_teacher_name: item.class_teacher_name || null
   };
-
-  if (item.id && !item.id.startsWith("cls_")) {
-    payload.id = item.id;
-  }
 
   try {
     const { data, error } = await supabase
@@ -1118,7 +1117,7 @@ export async function saveClass(item: Omit<ClassEntity, "id"> & { id?: string })
   } catch (e) {
     console.error("Supabase saveClass exception:", e);
   }
-  return { ...item, id: item.id || `cls_${Date.now()}` };
+  return { ...item, id: classId };
 }
 
 export async function deleteClass(id: string): Promise<void> {
