@@ -472,7 +472,6 @@ export async function saveStudentRecord(s: Omit<Student, "id"> & { id?: string }
     ...s,
     id: s.id || `s_${Date.now()}`,
     name: s.name || s.student_name || "Student",
-    student_name: s.student_name || s.name,
     admission_no: s.admission_no || s.roll_no || `SJ-${Date.now().toString().slice(-4)}`,
     form_no: s.form_no || `FORM-2026-${Math.floor(1000 + Math.random() * 9000)}`,
     session: s.session || "2026-2027",
@@ -486,12 +485,14 @@ export async function saveStudentRecord(s: Omit<Student, "id"> & { id?: string }
     address: s.address || "",
     photo_url: s.photo_url || "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=400&q=80",
     active_status: s.active_status ?? true,
-    wishes: s.wishes || "Happy Birthday!",
     created_at: s.created_at || new Date().toISOString(),
   };
 
   try {
     const dbPayload: any = cleanPayload(record);
+    delete dbPayload.wishes;
+    delete dbPayload.student_name;
+
     if (s.id && !s.id.startsWith("s_")) {
       dbPayload.id = s.id;
     } else {
@@ -500,7 +501,7 @@ export async function saveStudentRecord(s: Omit<Student, "id"> & { id?: string }
 
     const { data, error } = await supabase.from("students").upsert([dbPayload]).select();
     if (error) {
-      console.error("Supabase student save error:", error);
+      console.error("Supabase student save error:", error.message, error);
     } else if (data && data[0]?.id) {
       record.id = data[0].id;
     }
