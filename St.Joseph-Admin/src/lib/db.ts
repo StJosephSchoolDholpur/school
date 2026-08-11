@@ -1093,7 +1093,6 @@ export async function saveClass(item: Omit<ClassEntity, "id"> & { id?: string })
     name: item.name.trim(),
     code: item.code?.trim() || item.name.replace(/class/i, "").trim(),
     section: item.section || "A",
-    stream: item.stream || "General",
     display_order: Number(item.display_order) || 99,
     is_active: item.is_active ?? true,
     class_teacher_id: item.class_teacher_id || null,
