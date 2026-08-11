@@ -1146,7 +1146,20 @@ export async function saveFeeStructure(sections: FeeSection[]): Promise<void> {
 export async function fetchTransportRoutes(): Promise<TransportRoute[]> {
   try {
     const { data, error } = await supabase.from("transportation").select("*");
-    if (!error && data) return data;
+    if (!error && data) {
+      return data.map((d: any) => ({
+        id: d.id,
+        area: d.area,
+        busNo: d.busNo || d.busno || "",
+        stops: d.stops,
+        pickupTime: d.pickupTime || d.pickuptime || "",
+        dropTime: d.dropTime || d.droptime || "02:30 PM",
+        driverName: d.driverName || d.drivername || "Driver",
+        driverPhone: d.driverPhone || d.driverphone || "",
+        monthlyFee: d.monthlyFee || d.monthlyfee || "1,200",
+        status: d.status || "active"
+      }));
+    }
   } catch (e) {
     console.warn("Supabase fetchTransportRoutes error", e);
   }
@@ -1154,29 +1167,31 @@ export async function fetchTransportRoutes(): Promise<TransportRoute[]> {
 }
 
 export async function saveTransportRoute(r: Omit<TransportRoute, "id"> & { id?: string }): Promise<TransportRoute> {
-  const record: TransportRoute = {
-    id: r.id || `r_${Date.now()}`,
+  const payload: any = {
     area: r.area,
-    busNo: r.busNo,
+    "busNo": r.busNo,
     stops: r.stops,
-    pickupTime: r.pickupTime,
-    dropTime: r.dropTime || "02:30 PM",
-    driverName: r.driverName || "Driver",
-    driverPhone: r.driverPhone || "+91-88245-51683",
-    monthlyFee: r.monthlyFee || "1,200",
+    "pickupTime": r.pickupTime,
+    "dropTime": r.dropTime || "02:30 PM",
+    "driverName": r.driverName || "Driver",
+    "driverPhone": r.driverPhone || "+91-88245-51683",
+    "monthlyFee": r.monthlyFee || "1,200",
     status: r.status || "active",
   };
 
+  if (r.id && !r.id.startsWith("r_")) {
+    payload.id = r.id;
+  }
+
   try {
-    const payload = cleanPayload(record);
     const { data, error } = await supabase.from("transportation").upsert([payload]).select().single();
     if (error) console.warn("Supabase transport save error:", error);
-    if (data?.id) record.id = data.id;
+    if (data?.id) return { ...r, id: data.id };
   } catch (e) {
     console.warn("Supabase saveTransportRoute exception", e);
   }
 
-  return record;
+  return { ...r, id: r.id || `r_${Date.now()}` };
 }
 
 export async function deleteTransportRoute(id: string): Promise<void> {

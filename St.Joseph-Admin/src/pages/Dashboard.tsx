@@ -12,9 +12,32 @@ import {
   fetchStudents,
   saveStudentRecord,
   deleteStudentRecord,
+  fetchFeeStructure,
+  saveFeeStructure,
   fetchTransportRoutes,
   saveTransportRoute,
   deleteTransportRoute,
+  fetchMandatoryDocs,
+  saveMandatoryDoc,
+  deleteMandatoryDoc,
+  fetchNews,
+  saveNews,
+  deleteNews,
+  fetchEvents,
+  saveEvent,
+  deleteEvent,
+  fetchBooks,
+  saveBook,
+  deleteBook,
+  fetchAchievements,
+  saveAchievement,
+  deleteAchievement,
+  fetchGallery,
+  saveGallery,
+  deleteGallery,
+  fetchCalendar,
+  saveCalendar,
+  deleteCalendar,
   fetchAttendance,
   saveAttendanceRecords,
   fetchExamMarks,
@@ -26,10 +49,18 @@ import {
   AttendanceRecord,
   ExamMarkRecord,
   FeeReceiptRecord,
-  TransportRoute
+  FeeSection,
+  TransportRoute,
+  MandatoryDoc,
+  NewsItem,
+  EventItem,
+  BookItem,
+  AchievementItem,
+  GalleryItem,
+  CalendarEvent
 } from "../lib/db";
 
-// Modular Sub-Components
+// Modular Sub-Components for All Pages
 import { StudentManagementModule } from "../components/modules/StudentManagementModule";
 import { TeacherManagementModule } from "../components/modules/TeacherManagementModule";
 import { AttendanceModule } from "../components/modules/AttendanceModule";
@@ -38,6 +69,15 @@ import { FeeCollectionsModule } from "../components/modules/FeeCollectionsModule
 import { TcPortalModule } from "../components/modules/TcPortalModule";
 import { TransportModule } from "../components/modules/TransportModule";
 import { OverviewModule } from "../components/modules/OverviewModule";
+import { FeeStructureModule } from "../components/modules/FeeStructureModule";
+import { MandatoryDocModule } from "../components/modules/MandatoryDocModule";
+import { NewsModule } from "../components/modules/NewsModule";
+import { EventsModule } from "../components/modules/EventsModule";
+import { BooksModule } from "../components/modules/BooksModule";
+import { AchievementsModule } from "../components/modules/AchievementsModule";
+import { GalleryModule } from "../components/modules/GalleryModule";
+import { CalendarModule } from "../components/modules/CalendarModule";
+import { RbacModule } from "../components/modules/RbacModule";
 import { PrintReportCardModal, PrintFeeReceiptModal } from "../components/modules/PrintModals";
 
 export const Dashboard: React.FC = () => {
@@ -48,7 +88,15 @@ export const Dashboard: React.FC = () => {
   const [tcs, setTcs] = useState<TCRecordData[]>([]);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
+  const [fees, setFees] = useState<FeeSection[]>([]);
   const [routes, setRoutes] = useState<TransportRoute[]>([]);
+  const [mandatoryDocs, setMandatoryDocs] = useState<MandatoryDoc[]>([]);
+  const [news, setNews] = useState<NewsItem[]>([]);
+  const [eventsList, setEventsList] = useState<EventItem[]>([]);
+  const [booksList, setBooksList] = useState<BookItem[]>([]);
+  const [achievements, setAchievements] = useState<AchievementItem[]>([]);
+  const [galleryPhotos, setGalleryPhotos] = useState<GalleryItem[]>([]);
+  const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
   const [attendanceLogs, setAttendanceLogs] = useState<AttendanceRecord[]>([]);
   const [examMarks, setExamMarks] = useState<ExamMarkRecord[]>([]);
   const [feeCollections, setFeeCollections] = useState<FeeReceiptRecord[]>([]);
@@ -65,7 +113,15 @@ export const Dashboard: React.FC = () => {
         fetchedTcs,
         fetchedTeachers,
         fetchedStudents,
+        fetchedFees,
         fetchedRoutes,
+        fetchedDocs,
+        fetchedNews,
+        fetchedEvents,
+        fetchedBooks,
+        fetchedAchievements,
+        fetchedGallery,
+        fetchedCalendar,
         fetchedAtt,
         fetchedMarks,
         fetchedReceipts
@@ -73,7 +129,15 @@ export const Dashboard: React.FC = () => {
         fetchTCs(),
         fetchTeachers(),
         fetchStudents(),
+        fetchFeeStructure(),
         fetchTransportRoutes(),
+        fetchMandatoryDocs(),
+        fetchNews(),
+        fetchEvents(),
+        fetchBooks(),
+        fetchAchievements(),
+        fetchGallery(),
+        fetchCalendar(),
         fetchAttendance(),
         fetchExamMarks(),
         fetchFeeCollections()
@@ -82,7 +146,15 @@ export const Dashboard: React.FC = () => {
       setTcs(fetchedTcs);
       setTeachers(fetchedTeachers);
       setStudents(fetchedStudents);
+      setFees(fetchedFees);
       setRoutes(fetchedRoutes);
+      setMandatoryDocs(fetchedDocs);
+      setNews(fetchedNews);
+      setEventsList(fetchedEvents);
+      setBooksList(fetchedBooks);
+      setAchievements(fetchedAchievements);
+      setGalleryPhotos(fetchedGallery);
+      setCalendarEvents(fetchedCalendar);
       setAttendanceLogs(fetchedAtt);
       setExamMarks(fetchedMarks);
       setFeeCollections(fetchedReceipts);
@@ -95,9 +167,9 @@ export const Dashboard: React.FC = () => {
     loadData();
   }, []);
 
-  // Handlers for Students
-  const handleSaveStudent = async (student: Omit<Student, "id"> & { id?: string }) => {
-    await saveStudentRecord(student);
+  // Handlers for Database Mutations
+  const handleSaveStudent = async (s: Omit<Student, "id"> & { id?: string }) => {
+    await saveStudentRecord(s);
     await loadData();
   };
 
@@ -106,9 +178,8 @@ export const Dashboard: React.FC = () => {
     await loadData();
   };
 
-  // Handlers for Teachers
-  const handleSaveTeacher = async (teacher: Omit<Teacher, "id"> & { id?: string }) => {
-    await saveTeacherRecord(teacher);
+  const handleSaveTeacher = async (t: Omit<Teacher, "id"> & { id?: string }) => {
+    await saveTeacherRecord(t);
     await loadData();
   };
 
@@ -117,7 +188,6 @@ export const Dashboard: React.FC = () => {
     await loadData();
   };
 
-  // Handlers for TCs
   const handleUploadTC = async (file: File | null, record: Omit<TCRecordData, "id" | "file_path" | "file_url" | "created_at">) => {
     await uploadAndSaveTC(file, record);
     await loadData();
@@ -128,9 +198,8 @@ export const Dashboard: React.FC = () => {
     await loadData();
   };
 
-  // Handlers for Routes
-  const handleSaveRoute = async (route: Omit<TransportRoute, "id"> & { id?: string }) => {
-    await saveTransportRoute(route);
+  const handleSaveRoute = async (r: Omit<TransportRoute, "id"> & { id?: string }) => {
+    await saveTransportRoute(r);
     await loadData();
   };
 
@@ -139,13 +208,86 @@ export const Dashboard: React.FC = () => {
     await loadData();
   };
 
-  // Handlers for Attendance
+  const handleSaveFeeStructure = async (sections: FeeSection[]) => {
+    await saveFeeStructure(sections);
+    await loadData();
+  };
+
+  const handleSaveDoc = async (doc: Omit<MandatoryDoc, "id"> & { id?: string }) => {
+    await saveMandatoryDoc(doc);
+    await loadData();
+  };
+
+  const handleDeleteDoc = async (id: string) => {
+    await deleteMandatoryDoc(id);
+    await loadData();
+  };
+
+  const handleSaveNews = async (n: Omit<NewsItem, "id"> & { id?: string }) => {
+    await saveNews(n);
+    await loadData();
+  };
+
+  const handleDeleteNews = async (id: string) => {
+    await deleteNews(id);
+    await loadData();
+  };
+
+  const handleSaveEvent = async (e: Omit<EventItem, "id"> & { id?: string }) => {
+    await saveEvent(e);
+    await loadData();
+  };
+
+  const handleDeleteEvent = async (id: string) => {
+    await deleteEvent(id);
+    await loadData();
+  };
+
+  const handleSaveBook = async (b: Omit<BookItem, "id"> & { id?: string }) => {
+    await saveBook(b);
+    await loadData();
+  };
+
+  const handleDeleteBook = async (id: string) => {
+    await deleteBook(id);
+    await loadData();
+  };
+
+  const handleSaveAchievement = async (a: Omit<AchievementItem, "id"> & { id?: string }) => {
+    await saveAchievement(a);
+    await loadData();
+  };
+
+  const handleDeleteAchievement = async (id: string) => {
+    await deleteAchievement(id);
+    await loadData();
+  };
+
+  const handleSavePhoto = async (p: Omit<GalleryItem, "id"> & { id?: string }) => {
+    await saveGallery(p);
+    await loadData();
+  };
+
+  const handleDeletePhoto = async (id: string) => {
+    await deleteGallery(id);
+    await loadData();
+  };
+
+  const handleSaveCalendarEvent = async (c: Omit<CalendarEvent, "id"> & { id?: string }) => {
+    await saveCalendar(c);
+    await loadData();
+  };
+
+  const handleDeleteCalendarEvent = async (id: string) => {
+    await deleteCalendar(id);
+    await loadData();
+  };
+
   const handleSaveAttendance = async (records: AttendanceRecord[]) => {
     await saveAttendanceRecords(records);
     await loadData();
   };
 
-  // Handlers for Fee Collections
   const handleSaveFeeCollection = async (record: FeeReceiptRecord) => {
     await saveFeeCollectionRecord(record);
     await loadData();
@@ -160,7 +302,7 @@ export const Dashboard: React.FC = () => {
 
       {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
-        {/* Module Switcher based on Route Path */}
+        {/* Route Module Matching */}
         {(path === "/" || path === "/dashboard") && (
           <OverviewModule
             students={students}
@@ -223,12 +365,79 @@ export const Dashboard: React.FC = () => {
           />
         )}
 
+        {path === "/fee-structure" && (
+          <FeeStructureModule
+            feeStructure={fees}
+            onSaveFeeStructure={handleSaveFeeStructure}
+          />
+        )}
+
         {path === "/transport" && (
           <TransportModule
             routes={routes}
             onSaveRoute={handleSaveRoute}
             onDeleteRoute={handleDeleteRoute}
           />
+        )}
+
+        {path === "/mandatory" && (
+          <MandatoryDocModule
+            mandatoryDocs={mandatoryDocs}
+            onSaveDoc={handleSaveDoc}
+            onDeleteDoc={handleDeleteDoc}
+          />
+        )}
+
+        {path === "/news" && (
+          <NewsModule
+            newsList={news}
+            onSaveNews={handleSaveNews}
+            onDeleteNews={handleDeleteNews}
+          />
+        )}
+
+        {path === "/events" && (
+          <EventsModule
+            events={eventsList}
+            onSaveEvent={handleSaveEvent}
+            onDeleteEvent={handleDeleteEvent}
+          />
+        )}
+
+        {path === "/books" && (
+          <BooksModule
+            books={booksList}
+            onSaveBook={handleSaveBook}
+            onDeleteBook={handleDeleteBook}
+          />
+        )}
+
+        {path === "/achievements" && (
+          <AchievementsModule
+            achievements={achievements}
+            onSaveAchievement={handleSaveAchievement}
+            onDeleteAchievement={handleDeleteAchievement}
+          />
+        )}
+
+        {path === "/gallery" && (
+          <GalleryModule
+            photos={galleryPhotos}
+            onSavePhoto={handleSavePhoto}
+            onDeletePhoto={handleDeletePhoto}
+          />
+        )}
+
+        {path === "/calendar" && (
+          <CalendarModule
+            events={calendarEvents}
+            onSaveEvent={handleSaveCalendarEvent}
+            onDeleteEvent={handleDeleteCalendarEvent}
+          />
+        )}
+
+        {path === "/rbac" && (
+          <RbacModule />
         )}
 
         {/* Multi-Step Admission Registration Modal */}
