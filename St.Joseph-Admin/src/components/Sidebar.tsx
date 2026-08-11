@@ -56,11 +56,11 @@ export const Sidebar: React.FC = () => {
   const location = useLocation();
 
   const menuItems: MenuItem[] = [
-    { id: "overview", path: "/", label: "Dashboard Overview", icon: LayoutDashboard },
-    { id: "classes", path: "/classes", label: "Class Master Setup", icon: Layers, badge: "Master" },
-    { id: "students", path: "/students", label: "Class-Wise Students", icon: Users },
-    { id: "teachers", path: "/teachers", label: "Teachers Directory", icon: GraduationCap },
-    { id: "attendance", path: "/attendance", label: "Daily Attendance", icon: UserCheck, badge: "Live" },
+    { id: "overview", path: "/", label: "Dashboard", icon: LayoutDashboard },
+    { id: "students", path: "/students", label: "Students", icon: Users },
+    { id: "teachers", path: "/teachers", label: "Teachers", icon: GraduationCap },
+    { id: "classes", path: "/classes", label: "Classes", icon: Layers },
+    { id: "attendance", path: "/attendance", label: "Daily Attendance", icon: UserCheck },
     { id: "tc", path: "/tc", label: "TC Portal Manager", icon: FileCheck2 },
     { id: "fees", path: "/fee-structure", label: "Fee Structure", icon: IndianRupee },
     { id: "transport", path: "/transport", label: "Transportation Routes", icon: Bus },
@@ -85,12 +85,8 @@ export const Sidebar: React.FC = () => {
             </div>
             <div>
               <h2 className="font-heading font-extrabold text-sm text-white leading-tight">
-                St. Joseph's
+                St. Joseph's ERP
               </h2>
-              <p className="text-[10px] text-amber-400 font-bold uppercase tracking-wider flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                Admin Panel
-              </p>
             </div>
           </div>
         </div>
@@ -107,11 +103,10 @@ export const Sidebar: React.FC = () => {
               <button
                 key={item.id}
                 onClick={() => navigate(item.path)}
-                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
-                  active
-                    ? "bg-amber-500 text-slate-950 shadow-md"
-                    : "text-slate-400 hover:bg-slate-800 hover:text-white"
-                }`}
+                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${active
+                  ? "bg-amber-500 text-slate-950 shadow-md"
+                  : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                  }`}
               >
                 <div className="flex items-center gap-2.5">
                   <Icon className="w-4 h-4" />
@@ -119,9 +114,8 @@ export const Sidebar: React.FC = () => {
                 </div>
                 {item.badge && (
                   <span
-                    className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-md uppercase ${
-                      active ? "bg-slate-950/20 text-slate-950" : "bg-amber-500/20 text-amber-400"
-                    }`}
+                    className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-md uppercase ${active ? "bg-slate-950/20 text-slate-950" : "bg-amber-500/20 text-amber-400"
+                      }`}
                   >
                     {item.badge}
                   </span>

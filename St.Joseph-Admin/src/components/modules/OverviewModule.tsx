@@ -24,7 +24,7 @@ export const OverviewModule: React.FC<OverviewModuleProps> = ({
         <div className="relative z-10 space-y-2">
           <div className="flex items-center gap-2">
             <span className="text-xs font-extrabold text-amber-400 bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-full uppercase tracking-wider">
-              St. Joseph ERP Control Center
+              St. Joseph ERP
             </span>
           </div>
           <h1 className="text-2xl md:text-3xl font-heading font-extrabold text-white">

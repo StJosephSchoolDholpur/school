@@ -60,6 +60,7 @@ export interface Student {
   religion?: string;
   category?: string;
   gender?: string;
+  aadhar_no?: string;
   medical_condition?: string;
   address?: string;
   city_state?: string;

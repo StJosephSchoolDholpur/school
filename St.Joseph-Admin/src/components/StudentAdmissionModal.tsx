@@ -382,6 +382,16 @@ export const StudentAdmissionModal: React.FC<StudentAdmissionModalProps> = ({
                   />
                 </div>
                 <div>
+                  <label className="block text-slate-400 font-bold mb-1">Aadhar Card No.</label>
+                  <input
+                    type="text"
+                    placeholder="12-digit Aadhar No"
+                    value={formData.aadhar_no || ""}
+                    onChange={(e) => setFormData({ ...formData, aadhar_no: e.target.value })}
+                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono"
+                  />
+                </div>
+                <div>
                   <label className="block text-slate-400 font-bold mb-1">Suffering from Any Disease?</label>
                   <input
                     type="text"
