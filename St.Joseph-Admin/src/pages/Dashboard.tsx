@@ -349,6 +349,7 @@ export const Dashboard: React.FC = () => {
             classList={classList}
             students={students}
             books={booksList}
+            teachers={teachers}
             onSaveClass={handleSaveClass}
             onDeleteClass={handleDeleteClass}
             onSeedClasses={handleSeedClasses}

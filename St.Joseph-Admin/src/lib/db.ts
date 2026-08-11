@@ -244,6 +244,8 @@ export interface ClassEntity {
   stream?: string;
   display_order?: number;
   is_active?: boolean;
+  class_teacher_id?: string;
+  class_teacher_name?: string;
 }
 
 export interface AchievementItem {
@@ -1091,7 +1093,9 @@ export async function saveClass(item: Omit<ClassEntity, "id"> & { id?: string })
     code: item.code?.trim() || item.name.replace(/class/i, "").trim(),
     stream: item.stream || "General",
     display_order: Number(item.display_order) || 99,
-    is_active: item.is_active ?? true
+    is_active: item.is_active ?? true,
+    class_teacher_id: item.class_teacher_id || null,
+    class_teacher_name: item.class_teacher_name || null
   };
 
   if (item.id && !item.id.startsWith("cls_")) {
