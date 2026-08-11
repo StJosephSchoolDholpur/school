@@ -60,6 +60,7 @@ import {
   CalendarEvent,
   ClassEntity,
   fetchClasses,
+  seedInitialClasses,
   saveClass,
   deleteClass
 } from "../lib/db";
@@ -312,6 +313,11 @@ export const Dashboard: React.FC = () => {
     await loadData();
   };
 
+  const handleSeedClasses = async () => {
+    await seedInitialClasses();
+    await loadData();
+  };
+
   const path = location.pathname;
 
   return (
@@ -339,6 +345,7 @@ export const Dashboard: React.FC = () => {
             books={booksList}
             onSaveClass={handleSaveClass}
             onDeleteClass={handleDeleteClass}
+            onSeedClasses={handleSeedClasses}
           />
         )}
 

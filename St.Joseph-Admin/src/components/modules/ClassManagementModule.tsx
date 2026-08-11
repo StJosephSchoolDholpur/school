@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { ClassEntity, Student, BookItem } from "../../lib/db";
-import { Layers, Plus, Trash2, Edit3, ShieldCheck, CheckCircle2, ArrowUpDown } from "lucide-react";
+import { Layers, Plus, Trash2, Edit3, Sparkles } from "lucide-react";
 
 interface ClassManagementModuleProps {
   classList: ClassEntity[];
@@ -8,6 +8,7 @@ interface ClassManagementModuleProps {
   books: BookItem[];
   onSaveClass: (c: Omit<ClassEntity, "id"> & { id?: string }) => Promise<void>;
   onDeleteClass: (id: string) => Promise<void>;
+  onSeedClasses?: () => Promise<void>;
 }
 
 export const ClassManagementModule: React.FC<ClassManagementModuleProps> = ({
@@ -15,7 +16,8 @@ export const ClassManagementModule: React.FC<ClassManagementModuleProps> = ({
   students,
   books,
   onSaveClass,
-  onDeleteClass
+  onDeleteClass,
+  onSeedClasses
 }) => {
   const [form, setForm] = useState({
     name: "",
@@ -25,6 +27,7 @@ export const ClassManagementModule: React.FC<ClassManagementModuleProps> = ({
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSeeding, setIsSeeding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -50,6 +53,20 @@ export const ClassManagementModule: React.FC<ClassManagementModuleProps> = ({
     }
   };
 
+  const handleSeedClick = async () => {
+    if (!onSeedClasses) return;
+    if (confirm("Seed default 20 school classes (Class PG to Class XII) into the database?")) {
+      setIsSeeding(true);
+      try {
+        await onSeedClasses();
+      } catch (err) {
+        console.error("Seed error:", err);
+      } finally {
+        setIsSeeding(false);
+      }
+    }
+  };
+
   const handleEditClick = (c: ClassEntity) => {
     setEditingId(c.id);
     setForm({
@@ -69,12 +86,25 @@ export const ClassManagementModule: React.FC<ClassManagementModuleProps> = ({
             <Layers className="w-6 h-6 text-amber-400" /> Class Master Database Setup
           </h2>
           <p className="text-xs text-slate-400 mt-1">
-            Create, edit, and manage school classes dynamically. AllERP modules fetch classes directly from this database.
+            Manage school classes dynamically in the database. Add custom classes or seed initial standard classes.
           </p>
         </div>
 
-        <div className="bg-amber-500/10 border border-amber-500/30 text-amber-400 px-4 py-2.5 rounded-xl font-bold text-xs">
-          Active Classes: {classList.length} Configured
+        <div className="flex items-center gap-3">
+          {onSeedClasses && (
+            <button
+              onClick={handleSeedClick}
+              disabled={isSeeding}
+              className="bg-slate-950 border border-slate-800 hover:border-amber-500/40 text-amber-400 text-xs font-bold px-4 py-2.5 rounded-xl flex items-center gap-1.5 shadow-md transition-all disabled:opacity-50"
+            >
+              <Sparkles className="w-4 h-4 text-amber-400" />
+              <span>{isSeeding ? "Seeding..." : "+ Seed 20 Standard Classes (PG to XII)"}</span>
+            </button>
+          )}
+
+          <div className="bg-amber-500/10 border border-amber-500/30 text-amber-400 px-4 py-2.5 rounded-xl font-bold text-xs">
+            Active Classes: {classList.length} Configured
+          </div>
         </div>
       </div>
 
@@ -105,7 +135,7 @@ export const ClassManagementModule: React.FC<ClassManagementModuleProps> = ({
               <label className="text-slate-400 font-bold block mb-1">Class Title *</label>
               <input
                 type="text"
-                placeholder="e.g. Class Nursery or Class 11 Vocational *"
+                placeholder="e.g. Class PG, Class Nursery, Class 11 CS *"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 required
@@ -118,7 +148,7 @@ export const ClassManagementModule: React.FC<ClassManagementModuleProps> = ({
                 <label className="text-slate-400 font-bold block mb-1">Class Code</label>
                 <input
                   type="text"
-                  placeholder="e.g. 10"
+                  placeholder="e.g. 10 or PG"
                   value={form.code}
                   onChange={(e) => setForm({ ...form, code: e.target.value })}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white font-mono"
@@ -171,64 +201,84 @@ export const ClassManagementModule: React.FC<ClassManagementModuleProps> = ({
             <span className="text-xs text-slate-500 font-mono">Sorted by Order</span>
           </h3>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-slate-300">
-              <thead className="bg-slate-950 text-slate-400 font-bold uppercase border-b border-slate-800 text-[11px]">
-                <tr>
-                  <th className="py-3 px-3">Order</th>
-                  <th className="py-3 px-3">Class Name</th>
-                  <th className="py-3 px-3">Code</th>
-                  <th className="py-3 px-3">Stream</th>
-                  <th className="py-3 px-3 text-center">Students</th>
-                  <th className="py-3 px-3 text-center">Books</th>
-                  <th className="py-3 px-3 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/60">
-                {classList.map((c) => {
-                  const studentCount = students.filter((s) => (s.class || "").toLowerCase().includes(c.name.toLowerCase())).length;
-                  const bookCount = books.filter((b) => (b.class_name || "").toLowerCase().includes(c.name.toLowerCase())).length;
+          {classList.length === 0 ? (
+            <div className="p-12 text-center space-y-4">
+              <Layers className="w-12 h-12 text-slate-600 mx-auto" />
+              <h3 className="text-base font-bold text-slate-300">No Classes Found in Database</h3>
+              <p className="text-xs text-slate-500 max-w-xs mx-auto">
+                Add a class using the form on the left, or click below to populate the standard 20 school classes.
+              </p>
+              {onSeedClasses && (
+                <button
+                  onClick={handleSeedClick}
+                  disabled={isSeeding}
+                  className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs px-5 py-2.5 rounded-xl inline-flex items-center gap-2 shadow-lg"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  <span>{isSeeding ? "Seeding..." : "Seed 20 Standard Classes (PG to XII)"}</span>
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs text-slate-300">
+                <thead className="bg-slate-950 text-slate-400 font-bold uppercase border-b border-slate-800 text-[11px]">
+                  <tr>
+                    <th className="py-3 px-3">Order</th>
+                    <th className="py-3 px-3">Class Name</th>
+                    <th className="py-3 px-3">Code</th>
+                    <th className="py-3 px-3">Stream</th>
+                    <th className="py-3 px-3 text-center">Students</th>
+                    <th className="py-3 px-3 text-center">Books</th>
+                    <th className="py-3 px-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60">
+                  {classList.map((c) => {
+                    const studentCount = students.filter((s) => (s.class || "").toLowerCase().includes(c.name.toLowerCase())).length;
+                    const bookCount = books.filter((b) => (b.class_name || "").toLowerCase().includes(c.name.toLowerCase())).length;
 
-                  return (
-                    <tr key={c.id} className="hover:bg-slate-800/40 transition-colors">
-                      <td className="py-3 px-3 font-mono font-bold text-amber-400">#{c.display_order || 99}</td>
-                      <td className="py-3 px-3 font-extrabold text-white text-sm">{c.name}</td>
-                      <td className="py-3 px-3 font-mono text-slate-400">{c.code || "N/A"}</td>
-                      <td className="py-3 px-3">
-                        <span className="bg-slate-950 border border-slate-800 text-slate-300 font-bold px-2 py-0.5 rounded-md text-[10px]">
-                          {c.stream || "General"}
-                        </span>
-                      </td>
-                      <td className="py-3 px-3 text-center font-mono font-bold text-emerald-400">{studentCount}</td>
-                      <td className="py-3 px-3 text-center font-mono font-bold text-blue-400">{bookCount}</td>
-                      <td className="py-3 px-3 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => handleEditClick(c)}
-                            className="p-1.5 text-slate-400 hover:text-amber-400 bg-slate-950 rounded-lg border border-slate-800"
-                            title="Edit Class"
-                          >
-                            <Edit3 className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => {
-                              if (confirm(`Delete class "${c.name}" from database?`)) {
-                                onDeleteClass(c.id);
-                              }
-                            }}
-                            className="p-1.5 text-slate-400 hover:text-red-400 bg-slate-950 rounded-lg border border-slate-800"
-                            title="Delete Class"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                    return (
+                      <tr key={c.id} className="hover:bg-slate-800/40 transition-colors">
+                        <td className="py-3 px-3 font-mono font-bold text-amber-400">#{c.display_order || 99}</td>
+                        <td className="py-3 px-3 font-extrabold text-white text-sm">{c.name}</td>
+                        <td className="py-3 px-3 font-mono text-slate-400">{c.code || "N/A"}</td>
+                        <td className="py-3 px-3">
+                          <span className="bg-slate-950 border border-slate-800 text-slate-300 font-bold px-2 py-0.5 rounded-md text-[10px]">
+                            {c.stream || "General"}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 text-center font-mono font-bold text-emerald-400">{studentCount}</td>
+                        <td className="py-3 px-3 text-center font-mono font-bold text-blue-400">{bookCount}</td>
+                        <td className="py-3 px-3 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => handleEditClick(c)}
+                              className="p-1.5 text-slate-400 hover:text-amber-400 bg-slate-950 rounded-lg border border-slate-800"
+                              title="Edit Class"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (confirm(`Delete class "${c.name}" from database?`)) {
+                                  onDeleteClass(c.id);
+                                }
+                              }}
+                              className="p-1.5 text-slate-400 hover:text-red-400 bg-slate-950 rounded-lg border border-slate-800"
+                              title="Delete Class"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
     </div>
