@@ -1752,10 +1752,10 @@ export async function fetchClasses(): Promise<ClassEntity[]> {
 
 export async function saveClass(item: Omit<ClassEntity, "id"> & { id?: string }): Promise<ClassEntity> {
   const payload: any = {
-    name: item.name,
-    code: item.code || item.name.replace(/class/i, "").trim(),
+    name: item.name.trim(),
+    code: item.code?.trim() || item.name.replace(/class/i, "").trim(),
     stream: item.stream || "General",
-    display_order: item.display_order ?? 99,
+    display_order: Number(item.display_order) || 99,
     is_active: item.is_active ?? true
   };
 
@@ -1764,19 +1764,28 @@ export async function saveClass(item: Omit<ClassEntity, "id"> & { id?: string })
   }
 
   try {
-    const { data, error } = await supabase.from("classes").upsert([payload]).select().single();
-    if (error) console.warn("Supabase class save error:", error);
-    if (data?.id) return { ...item, id: data.id };
+    const { data, error } = await supabase
+      .from("classes")
+      .upsert([payload], { onConflict: "name" })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Supabase classes save error:", error.message, error);
+    } else if (data) {
+      return data;
+    }
   } catch (e) {
-    console.warn("Supabase saveClass exception", e);
+    console.error("Supabase saveClass exception:", e);
   }
   return { ...item, id: item.id || `cls_${Date.now()}` };
 }
 
 export async function deleteClass(id: string): Promise<void> {
   try {
-    await supabase.from("classes").delete().eq("id", id);
+    const { error } = await supabase.from("classes").delete().eq("id", id);
+    if (error) console.error("Supabase deleteClass error:", error);
   } catch (e) {
-    console.warn("Supabase deleteClass error", e);
+    console.error("Supabase deleteClass exception:", e);
   }
 }
