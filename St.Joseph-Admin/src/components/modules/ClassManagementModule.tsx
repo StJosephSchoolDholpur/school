@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { ClassEntity, Student, BookItem, Teacher } from "../../lib/db";
-import { Layers, Plus, Trash2, Edit3, Sparkles, UserCheck, X, Check } from "lucide-react";
+import { Layers, Plus, Trash2, Edit3, Sparkles, UserCheck, X } from "lucide-react";
 
 interface ClassManagementModuleProps {
   classList: ClassEntity[];
@@ -87,6 +87,7 @@ export const ClassManagementModule: React.FC<ClassManagementModuleProps> = ({
   const [form, setForm] = useState({
     name: "",
     code: "",
+    section: "A",
     class_teacher_id: ""
   });
 
@@ -103,7 +104,7 @@ export const ClassManagementModule: React.FC<ClassManagementModuleProps> = ({
 
   const handleOpenAddModal = () => {
     setEditingId(null);
-    setForm({ name: "", code: "", class_teacher_id: "" });
+    setForm({ name: "", code: "", section: "A", class_teacher_id: "" });
     setIsModalOpen(true);
   };
 
@@ -112,6 +113,7 @@ export const ClassManagementModule: React.FC<ClassManagementModuleProps> = ({
     setForm({
       name: c.name,
       code: c.code || "",
+      section: c.section || "A",
       class_teacher_id: c.class_teacher_id || ""
     });
     setIsModalOpen(true);
@@ -130,12 +132,13 @@ export const ClassManagementModule: React.FC<ClassManagementModuleProps> = ({
         id: editingId || undefined,
         name: form.name.trim(),
         code: form.code.trim() || form.name.replace(/class/i, "").trim(),
+        section: form.section.trim() || "A",
         display_order: autoOrder,
         class_teacher_id: form.class_teacher_id || undefined,
         class_teacher_name: selectedTeacher ? selectedTeacher.name : undefined,
         is_active: true
       });
-      setForm({ name: "", code: "", class_teacher_id: "" });
+      setForm({ name: "", code: "", section: "A", class_teacher_id: "" });
       setEditingId(null);
       setIsModalOpen(false);
     } catch (err) {
@@ -182,7 +185,7 @@ export const ClassManagementModule: React.FC<ClassManagementModuleProps> = ({
             <Layers className="w-6 h-6 text-amber-400" /> Class Master Database Setup
           </h2>
           <p className="text-xs text-slate-400 mt-1">
-            Configure school classes (Class PG to Class X) and assign dedicated Class Teachers.
+            Configure school classes, sections (e.g. A, B), and assign dedicated Class Teachers.
           </p>
         </div>
 
@@ -223,11 +226,11 @@ export const ClassManagementModule: React.FC<ClassManagementModuleProps> = ({
         </div>
       </div>
 
-      {/* Classes Directory Table (Full Width 100%) */}
+      {/* Classes Directory Table */}
       <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
         <h3 className="font-extrabold text-sm text-white flex items-center justify-between">
           <span className="flex items-center gap-2">
-            <Layers className="w-4 h-4 text-emerald-400" /> Configured Classes Directory (PG to 10th)
+            <Layers className="w-4 h-4 text-emerald-400" /> Configured Classes & Sections Directory
           </span>
           <span className="text-xs text-slate-500 font-mono">Sorted Automatically</span>
         </h3>
@@ -257,7 +260,8 @@ export const ClassManagementModule: React.FC<ClassManagementModuleProps> = ({
                 <tr>
                   <th className="py-3.5 px-4">Order</th>
                   <th className="py-3.5 px-4">Class Name</th>
-                  <th className="py-3.5 px-4">Class Code</th>
+                  <th className="py-3.5 px-4">Section(s)</th>
+                  <th className="py-3.5 px-4">Code</th>
                   <th className="py-3.5 px-4">Class Teacher</th>
                   <th className="py-3.5 px-4 text-center">Enrolled Students</th>
                   <th className="py-3.5 px-4 text-center">Book List</th>
@@ -273,6 +277,11 @@ export const ClassManagementModule: React.FC<ClassManagementModuleProps> = ({
                     <tr key={c.id} className="hover:bg-slate-800/40 transition-colors">
                       <td className="py-3.5 px-4 font-mono font-bold text-amber-400">#{c.display_order || 99}</td>
                       <td className="py-3.5 px-4 font-extrabold text-white text-sm">{c.name}</td>
+                      <td className="py-3.5 px-4">
+                        <span className="bg-amber-500/10 border border-amber-500/30 text-amber-400 font-mono font-bold px-2.5 py-1 rounded-lg text-xs">
+                          Sec {c.section || "A"}
+                        </span>
+                      </td>
                       <td className="py-3.5 px-4 font-mono text-slate-400">{c.code || "N/A"}</td>
                       <td className="py-3.5 px-4">
                         {c.class_teacher_name ? (
@@ -324,7 +333,7 @@ export const ClassManagementModule: React.FC<ClassManagementModuleProps> = ({
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <h3 className="text-base font-extrabold text-white flex items-center gap-2">
                 <Layers className="w-5 h-5 text-amber-400" />
-                {editingId ? "Edit Class Setup" : "Add New School Class"}
+                {editingId ? "Edit Class & Section Setup" : "Add New School Class"}
               </h3>
               <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-white">
                 <X className="w-5 h-5" />
@@ -336,7 +345,7 @@ export const ClassManagementModule: React.FC<ClassManagementModuleProps> = ({
                 <label className="text-slate-400 font-bold block mb-1">Class Name *</label>
                 <input
                   type="text"
-                  placeholder="e.g. Class 5 or Class V"
+                  placeholder="e.g. Class 4 or Class IV"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white font-bold focus:border-amber-400 focus:outline-none"
@@ -345,10 +354,25 @@ export const ClassManagementModule: React.FC<ClassManagementModuleProps> = ({
               </div>
 
               <div>
+                <label className="text-slate-400 font-bold block mb-1">Section(s) *</label>
+                <input
+                  type="text"
+                  placeholder="e.g. A, B or A"
+                  value={form.section}
+                  onChange={(e) => setForm({ ...form, section: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-amber-400 font-mono font-bold focus:border-amber-400 focus:outline-none"
+                  required
+                />
+                <p className="text-[11px] text-slate-500 mt-1">
+                  Specify single or multiple sections (e.g. A, B or Section A).
+                </p>
+              </div>
+
+              <div>
                 <label className="text-slate-400 font-bold block mb-1">Class Code (Optional)</label>
                 <input
                   type="text"
-                  placeholder="e.g. 5"
+                  placeholder="e.g. 4"
                   value={form.code}
                   onChange={(e) => setForm({ ...form, code: e.target.value })}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white font-bold focus:border-amber-400 focus:outline-none"
@@ -380,9 +404,6 @@ export const ClassManagementModule: React.FC<ClassManagementModuleProps> = ({
                     );
                   })}
                 </select>
-                <p className="text-[11px] text-slate-500 mt-1">
-                  Note: A teacher already assigned as Class Teacher to another class cannot be selected.
-                </p>
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">

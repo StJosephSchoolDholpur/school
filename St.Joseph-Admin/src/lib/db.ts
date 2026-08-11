@@ -241,6 +241,7 @@ export interface ClassEntity {
   id: string;
   name: string;
   code?: string;
+  section?: string;
   stream?: string;
   display_order?: number;
   is_active?: boolean;
@@ -1091,6 +1092,7 @@ export async function saveClass(item: Omit<ClassEntity, "id"> & { id?: string })
   const payload: any = {
     name: item.name.trim(),
     code: item.code?.trim() || item.name.replace(/class/i, "").trim(),
+    section: item.section || "A",
     stream: item.stream || "General",
     display_order: Number(item.display_order) || 99,
     is_active: item.is_active ?? true,
