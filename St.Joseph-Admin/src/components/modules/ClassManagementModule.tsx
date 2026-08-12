@@ -275,7 +275,14 @@ export const ClassManagementModule: React.FC<ClassManagementModuleProps> = ({
               </thead>
               <tbody className="divide-y divide-slate-800/60">
                 {classList.map((c) => {
-                  const studentCount = students.filter((s) => isSameClass(s.class, c.name)).length;
+                  const studentCount = students.filter((s) => {
+                    const matchClass = isSameClass(s.class, c.name);
+                    if (!matchClass) return false;
+                    const studentSec = (s.section || "A").trim().toUpperCase();
+                    const classSec = (c.section || "A").trim().toUpperCase();
+                    return studentSec === classSec;
+                  }).length;
+
                   const bookCount = books.filter((b) => isSameClass(b.class_name, c.name)).length;
 
                   return (
