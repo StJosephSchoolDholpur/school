@@ -86,15 +86,18 @@ import { CalendarModule } from "../components/modules/CalendarModule";
 import { RbacModule } from "../components/modules/RbacModule";
 import { ClassManagementModule } from "../components/modules/ClassManagementModule";
 import { PrintReportCardModal, PrintFeeReceiptModal } from "../components/modules/PrintModals";
+import { Loader } from "../components/Loader";
 
 export const Dashboard: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const path = location.pathname;
 
-  // State Stores
+  // Global State for ERP Database
+  const [isLoading, setIsLoading] = useState(true);
+  const [classList, setClassList] = useState<ClassEntity[]>([]);
   const [tcs, setTcs] = useState<TCRecordData[]>([]);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
-  const [classList, setClassList] = useState<ClassEntity[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [fees, setFees] = useState<FeeSection[]>([]);
   const [routes, setRoutes] = useState<TransportRoute[]>([]);
@@ -117,6 +120,7 @@ export const Dashboard: React.FC = () => {
 
   // Load All Database Stores
   const loadData = async () => {
+    setIsLoading(true);
     try {
       const [
         fetchedClasses,
@@ -172,6 +176,8 @@ export const Dashboard: React.FC = () => {
       setFeeCollections(fetchedReceipts);
     } catch (err) {
       console.error("Dashboard data load error:", err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -324,8 +330,6 @@ export const Dashboard: React.FC = () => {
     await clearAllClasses();
     await loadData();
   };
-
-  const path = location.pathname;
 
   return (
     <div className="flex h-screen bg-slate-950 text-slate-100 font-sans overflow-hidden">
@@ -517,6 +521,8 @@ export const Dashboard: React.FC = () => {
           receipt={printReceipt}
           onClose={() => setPrintReceipt(null)}
         />
+        {/* Loading Overlay */}
+        {isLoading && <Loader text="Loading St. Joseph Database..." />}
       </main>
     </div>
   );
