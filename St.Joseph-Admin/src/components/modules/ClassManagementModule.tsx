@@ -93,10 +93,13 @@ export const ClassManagementModule: React.FC<ClassManagementModuleProps> = ({
 
   // Calculate teachers already assigned as class teacher (1 Teacher = 1 Class rule)
   const assignedTeacherMap = useMemo(() => {
-    const map: Record<string, string> = {}; // teacherId -> className
+    const map: Record<string, { className: string; classId: string }> = {}; // teacherId -> info
     classList.forEach((c) => {
       if (c.class_teacher_id) {
-        map[c.class_teacher_id] = c.name;
+        map[c.class_teacher_id] = {
+          className: `${c.name} (Sec ${c.section || 'A'})`,
+          classId: c.id
+        };
       }
     });
     return map;
@@ -121,18 +124,31 @@ export const ClassManagementModule: React.FC<ClassManagementModuleProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name.trim()) return;
+    let rawName = form.name.trim();
+    if (!rawName) return;
+
+    const section = form.section.trim() || "A";
+
+    // Prevent duplicate name conflicts if multiple section classes have the same base name (e.g. Class 2)
+    const duplicateExists = classList.some(
+      (c) => c.name.toLowerCase() === rawName.toLowerCase() && c.id !== editingId
+    );
+
+    let finalName = rawName;
+    if (duplicateExists) {
+      finalName = `${rawName} - Sec ${section}`;
+    }
 
     const selectedTeacher = teachers.find((t) => t.id === form.class_teacher_id);
-    const autoOrder = getAutoDisplayOrder(form.name, classList.length);
+    const autoOrder = getAutoDisplayOrder(rawName, classList.length);
 
     setIsSubmitting(true);
     try {
       await onSaveClass({
         id: editingId || undefined,
-        name: form.name.trim(),
-        code: form.code.trim() || form.name.replace(/class/i, "").trim(),
-        section: form.section.trim() || "A",
+        name: finalName,
+        code: form.code.trim() || rawName.replace(/class/i, "").trim() + "-" + section,
+        section: section,
         display_order: autoOrder,
         class_teacher_id: form.class_teacher_id || undefined,
         class_teacher_name: selectedTeacher ? selectedTeacher.name : undefined,
@@ -185,7 +201,7 @@ export const ClassManagementModule: React.FC<ClassManagementModuleProps> = ({
             <Layers className="w-6 h-6 text-amber-400" /> Class Master Database Setup
           </h2>
           <p className="text-xs text-slate-400 mt-1">
-            Configure school classes, sections (e.g. A, B), and assign dedicated Class Teachers.
+            Configure school classes, sections (e.g. A, B), and assign dedicated Class Teachers per section.
           </p>
         </div>
 
@@ -260,9 +276,9 @@ export const ClassManagementModule: React.FC<ClassManagementModuleProps> = ({
                 <tr>
                   <th className="py-3.5 px-4">Order</th>
                   <th className="py-3.5 px-4">Class Name</th>
-                  <th className="py-3.5 px-4">Section(s)</th>
+                  <th className="py-3.5 px-4">Section</th>
                   <th className="py-3.5 px-4">Code</th>
-                  <th className="py-3.5 px-4">Class Teacher</th>
+                  <th className="py-3.5 px-4">Assigned Class Teacher</th>
                   <th className="py-3.5 px-4 text-center">Enrolled Students</th>
                   <th className="py-3.5 px-4 text-center">Book List</th>
                   <th className="py-3.5 px-4 text-right">Actions</th>
@@ -345,7 +361,7 @@ export const ClassManagementModule: React.FC<ClassManagementModuleProps> = ({
                 <label className="text-slate-400 font-bold block mb-1">Class Name *</label>
                 <input
                   type="text"
-                  placeholder="e.g. Class 4 or Class IV"
+                  placeholder="e.g. Class 2"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white font-bold focus:border-amber-400 focus:outline-none"
@@ -354,17 +370,17 @@ export const ClassManagementModule: React.FC<ClassManagementModuleProps> = ({
               </div>
 
               <div>
-                <label className="text-slate-400 font-bold block mb-1">Section(s) *</label>
+                <label className="text-slate-400 font-bold block mb-1">Section *</label>
                 <input
                   type="text"
-                  placeholder="e.g. A, B or A"
+                  placeholder="e.g. A or B"
                   value={form.section}
                   onChange={(e) => setForm({ ...form, section: e.target.value })}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-amber-400 font-mono font-bold focus:border-amber-400 focus:outline-none"
                   required
                 />
                 <p className="text-[11px] text-slate-500 mt-1">
-                  Specify single or multiple sections (e.g. A, B or Section A).
+                  Specify the section for this entry (e.g. A, B, or C).
                 </p>
               </div>
 
@@ -372,7 +388,7 @@ export const ClassManagementModule: React.FC<ClassManagementModuleProps> = ({
                 <label className="text-slate-400 font-bold block mb-1">Class Code (Optional)</label>
                 <input
                   type="text"
-                  placeholder="e.g. 4"
+                  placeholder="e.g. 2A or 2B"
                   value={form.code}
                   onChange={(e) => setForm({ ...form, code: e.target.value })}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white font-bold focus:border-amber-400 focus:outline-none"
@@ -381,7 +397,7 @@ export const ClassManagementModule: React.FC<ClassManagementModuleProps> = ({
 
               <div>
                 <label className="text-slate-400 font-bold block mb-1">
-                  Assign Class Teacher (1 Teacher per Class)
+                  Assign Dedicated Class Teacher (1 Teacher per Class Section)
                 </label>
                 <select
                   value={form.class_teacher_id}
@@ -390,8 +406,8 @@ export const ClassManagementModule: React.FC<ClassManagementModuleProps> = ({
                 >
                   <option value="">-- Select Class Teacher --</option>
                   {teachers.map((t) => {
-                    const assignedToClass = assignedTeacherMap[t.id];
-                    const isAssignedToOther = assignedToClass && assignedToClass !== form.name;
+                    const assignedInfo = assignedTeacherMap[t.id];
+                    const isAssignedToOther = assignedInfo && assignedInfo.classId !== editingId;
 
                     return (
                       <option
@@ -399,11 +415,14 @@ export const ClassManagementModule: React.FC<ClassManagementModuleProps> = ({
                         value={t.id}
                         disabled={!!isAssignedToOther}
                       >
-                        {t.name} ({t.designation || "Teacher"}) {isAssignedToOther ? `[Assigned to ${assignedToClass}]` : ""}
+                        {t.name} ({t.designation || "Teacher"}) {isAssignedToOther ? `[Assigned to ${assignedInfo.className}]` : ""}
                       </option>
                     );
                   })}
                 </select>
+                <p className="text-[11px] text-slate-500 mt-1">
+                  A teacher assigned as Class Teacher to another section/class will be disabled here.
+                </p>
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">

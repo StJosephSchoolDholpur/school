@@ -1108,7 +1108,7 @@ export async function saveClass(item: Omit<ClassEntity, "id"> & { id?: string })
   try {
     const { data, error } = await supabase
       .from("classes")
-      .upsert([payload], { onConflict: "name" })
+      .upsert([payload], { onConflict: "id" })
       .select()
       .single();
 
