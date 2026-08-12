@@ -51,6 +51,8 @@ export interface Student {
   student_name?: string;
   admission_no?: string;
   class: string;
+  class_id?: string;
+  class_code?: string;
   section?: string;
   roll_no?: string;
   dob: string; // YYYY-MM-DD
@@ -482,6 +484,8 @@ export async function saveStudentRecord(s: Omit<Student, "id"> & { id?: string }
     form_no: s.form_no || `FORM-2026-${Math.floor(1000 + Math.random() * 9000)}`,
     session: s.session || "2026-2027",
     class: s.class || "Class Nursery",
+    class_id: s.class_id || undefined,
+    class_code: s.class_code || undefined,
     section: s.section || "A",
     roll_no: s.roll_no || "",
     dob: s.dob || "2020-01-01",

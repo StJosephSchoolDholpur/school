@@ -287,7 +287,16 @@ export const StudentAdmissionModal: React.FC<StudentAdmissionModalProps> = ({
                   <label className="block text-slate-400 font-bold mb-1">Admission Sought in Class *</label>
                   <select
                     value={formData.class}
-                    onChange={(e) => setFormData({ ...formData, class: e.target.value })}
+                    onChange={(e) => {
+                      const selectedClassName = e.target.value;
+                      const matchedClass = classList?.find((c) => c.name === selectedClassName);
+                      setFormData({
+                        ...formData,
+                        class: selectedClassName,
+                        class_id: matchedClass?.id,
+                        class_code: matchedClass?.code
+                      });
+                    }}
                     className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-amber-400 font-bold"
                   >
                     <option value="">-- Select Class --</option>

@@ -160,9 +160,12 @@ export const StudentManagementModule: React.FC<StudentManagementModuleProps> = (
     if (!selectedClass || !quickStudent.name.trim()) return;
 
     setIsAddingQuick(true);
+    const matchedClassObj = classList?.find((c) => isSameClass(c.name, selectedClass));
     try {
       await onSaveStudent({
         class: selectedClass,
+        class_id: matchedClassObj?.id,
+        class_code: matchedClassObj?.code,
         name: quickStudent.name.trim(),
         student_name: quickStudent.name.trim(),
         dob: quickStudent.dob || "2020-01-01",
