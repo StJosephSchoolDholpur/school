@@ -128,17 +128,6 @@ export const ClassManagementModule: React.FC<ClassManagementModuleProps> = ({
     if (!rawName) return;
 
     const section = form.section.trim() || "A";
-
-    // Prevent duplicate name conflicts if multiple section classes have the same base name (e.g. Class 2)
-    const duplicateExists = classList.some(
-      (c) => c.name.toLowerCase() === rawName.toLowerCase() && c.id !== editingId
-    );
-
-    let finalName = rawName;
-    if (duplicateExists) {
-      finalName = `${rawName} - Sec ${section}`;
-    }
-
     const selectedTeacher = teachers.find((t) => t.id === form.class_teacher_id);
     const autoOrder = getAutoDisplayOrder(rawName, classList.length);
 
@@ -146,8 +135,8 @@ export const ClassManagementModule: React.FC<ClassManagementModuleProps> = ({
     try {
       await onSaveClass({
         id: editingId || undefined,
-        name: finalName,
-        code: form.code.trim() || rawName.replace(/class/i, "").trim() + "-" + section,
+        name: rawName,
+        code: form.code.trim() || rawName.replace(/class/i, "").trim() + (section !== "A" ? `-${section}` : ""),
         section: section,
         display_order: autoOrder,
         class_teacher_id: form.class_teacher_id || undefined,
