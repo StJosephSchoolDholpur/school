@@ -23,34 +23,27 @@ interface StudentManagementModuleProps {
   onEditStudent?: (student: Student) => void;
 }
 
-const DEFAULT_CLASSES = [
-  "Class PG",
-  "Class Nursery",
-  "Class LKG",
-  "Class UKG",
-  "Class I",
-  "Class II",
-  "Class III",
-  "Class IV",
-  "Class V",
-  "Class VI",
-  "Class VII",
-  "Class VIII",
-  "Class IX",
-  "Class X",
-  "Class XI (Science)",
-  "Class XI (Commerce)",
-  "Class XI (Arts)",
-  "Class XII (Science)",
-  "Class XII (Commerce)",
-  "Class XII (Arts)"
+const DEFAULT_CLASSES: ClassEntity[] = [
+  { id: "cls_pg", name: "Class PG", section: "A" },
+  { id: "cls_nur", name: "Class Nursery", section: "A" },
+  { id: "cls_lkg", name: "Class LKG", section: "A" },
+  { id: "cls_ukg", name: "Class UKG", section: "A" },
+  { id: "cls_1", name: "Class I", section: "A" },
+  { id: "cls_2", name: "Class II", section: "A" },
+  { id: "cls_3", name: "Class III", section: "A" },
+  { id: "cls_4", name: "Class IV", section: "A" },
+  { id: "cls_5", name: "Class V", section: "A" },
+  { id: "cls_6", name: "Class VI", section: "A" },
+  { id: "cls_7", name: "Class VII", section: "A" },
+  { id: "cls_8", name: "Class VIII", section: "A" },
+  { id: "cls_9", name: "Class IX", section: "A" },
+  { id: "cls_10", name: "Class X", section: "A" }
 ];
 
 const normalizeClassKey = (clsName: string): string => {
   if (!clsName) return "";
   let clean = clsName.toLowerCase().replace(/class/g, "").replace(/\s+/g, "").trim();
   clean = clean.replace(/[-_][a-z0-9]/g, "");
-  clean = clean.replace(/\(science\)/g, "").replace(/\(commerce\)/g, "").replace(/\(arts\)/g, "");
 
   const romanMap: Record<string, string> = {
     "pg": "pg",
@@ -66,9 +59,7 @@ const normalizeClassKey = (clsName: string): string => {
     "vii": "7",
     "viii": "8",
     "ix": "9",
-    "x": "10",
-    "xi": "11",
-    "xii": "12"
+    "x": "10"
   };
 
   if (romanMap[clean]) return romanMap[clean];
@@ -76,10 +67,20 @@ const normalizeClassKey = (clsName: string): string => {
 };
 
 const isSameClass = (clsA: string, clsB: string): boolean => {
+  if (!clsA || !clsB) return false;
   const normA = normalizeClassKey(clsA);
   const normB = normalizeClassKey(clsB);
   if (normA && normB && normA === normB) return true;
   return clsA.toLowerCase().trim() === clsB.toLowerCase().trim();
+};
+
+export const isStudentInClassObj = (s: Student, c: ClassEntity): boolean => {
+  if (s.class_id && s.class_id === c.id) return true;
+  const matchClass = isSameClass(s.class, c.name);
+  if (!matchClass) return false;
+  const studentSec = (s.section || "A").trim().toUpperCase();
+  const classSec = (c.section || "A").trim().toUpperCase();
+  return studentSec === classSec;
 };
 
 export const StudentManagementModule: React.FC<StudentManagementModuleProps> = ({
@@ -90,16 +91,21 @@ export const StudentManagementModule: React.FC<StudentManagementModuleProps> = (
   onOpenAdmissionModal,
   onEditStudent
 }) => {
-  const activeClassNames = useMemo(() => {
+  const activeClasses = useMemo(() => {
     if (classList && classList.length > 0) {
-      return classList.map((c) => c.name);
+      return classList;
     }
     return DEFAULT_CLASSES;
   }, [classList]);
 
-  const [selectedClass, setSelectedClass] = useState<string | null>(null);
+  const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [sectionFilter, setSectionFilter] = useState("All");
+
+  const selectedClassEntity = useMemo(() => {
+    if (!selectedClassId) return null;
+    return activeClasses.find((c) => c.id === selectedClassId) || null;
+  }, [selectedClassId, activeClasses]);
 
   // Inline Quick Add Student Form State
   const [quickStudent, setQuickStudent] = useState({
@@ -111,35 +117,25 @@ export const StudentManagementModule: React.FC<StudentManagementModuleProps> = (
   });
   const [isAddingQuick, setIsAddingQuick] = useState(false);
 
-  // Group Students Class-Wise using smart class matching
+  // Group Students Class-Wise using strict class + section matching
   const classStats = useMemo(() => {
-    const map: Record<string, { total: number; sections: Set<string>; students: Student[] }> = {};
+    const map: Record<string, { total: number; students: Student[] }> = {};
 
-    // Initialize all active classes
-    activeClassNames.forEach((c) => {
-      map[c] = { total: 0, sections: new Set(["A"]), students: [] };
-    });
-
-    // Populate with actual students
-    students.forEach((s) => {
-      const studentCls = s.class || "Class Nursery";
-      const matchedClass = activeClassNames.find((ac) => isSameClass(studentCls, ac)) || studentCls;
-
-      if (!map[matchedClass]) {
-        map[matchedClass] = { total: 0, sections: new Set(["A"]), students: [] };
-      }
-      map[matchedClass].total += 1;
-      if (s.section) map[matchedClass].sections.add(s.section);
-      map[matchedClass].students.push(s);
+    activeClasses.forEach((c) => {
+      const classStudents = students.filter((s) => isStudentInClassObj(s, c));
+      map[c.id] = {
+        total: classStudents.length,
+        students: classStudents
+      };
     });
 
     return map;
-  }, [students, activeClassNames]);
+  }, [students, activeClasses]);
 
   // Filtered Students for the selected class view
   const currentClassStudents = useMemo(() => {
-    if (!selectedClass) return [];
-    const classData = classStats[selectedClass]?.students || [];
+    if (!selectedClassEntity) return [];
+    const classData = classStats[selectedClassEntity.id]?.students || [];
 
     return classData.filter((s) => {
       const matchesSearch =
@@ -148,30 +144,29 @@ export const StudentManagementModule: React.FC<StudentManagementModuleProps> = (
         (s.admission_no || s.roll_no || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
         (s.father_name || "").toLowerCase().includes(searchQuery.toLowerCase());
 
-      const matchesSection = sectionFilter === "All" || (s.section || "A") === sectionFilter;
+      const matchesSection = sectionFilter === "All" || (s.section || "A").toUpperCase() === sectionFilter.toUpperCase();
 
       return matchesSearch && matchesSection;
     });
-  }, [selectedClass, classStats, searchQuery, sectionFilter]);
+  }, [selectedClassEntity, classStats, searchQuery, sectionFilter]);
 
   // Handle Quick Add Submit
   const handleQuickAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedClass || !quickStudent.name.trim()) return;
+    if (!selectedClassEntity || !quickStudent.name.trim()) return;
 
     setIsAddingQuick(true);
-    const matchedClassObj = classList?.find((c) => isSameClass(c.name, selectedClass));
     try {
       await onSaveStudent({
-        class: selectedClass,
-        class_id: matchedClassObj?.id,
-        class_code: matchedClassObj?.code,
+        class: selectedClassEntity.name,
+        class_id: selectedClassEntity.id,
+        class_code: selectedClassEntity.code,
         name: quickStudent.name.trim(),
         student_name: quickStudent.name.trim(),
         dob: quickStudent.dob || "2020-01-01",
         father_name: quickStudent.father_name.trim(),
         parent_mobile: quickStudent.parent_mobile.trim(),
-        section: quickStudent.section,
+        section: quickStudent.section || selectedClassEntity.section || "A",
         active_status: true
       });
       setQuickStudent({ name: "", dob: "", father_name: "", parent_mobile: "", section: "A" });
@@ -185,7 +180,7 @@ export const StudentManagementModule: React.FC<StudentManagementModuleProps> = (
   return (
     <div className="space-y-6">
       {/* ─── SCREEN 1: CLASS CARDS SELECTION GRID ─── */}
-      {!selectedClass ? (
+      {!selectedClassEntity ? (
         <div className="space-y-6">
           {/* Header Controls */}
           <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -194,7 +189,7 @@ export const StudentManagementModule: React.FC<StudentManagementModuleProps> = (
                 <Users className="w-6 h-6 text-amber-400" /> Class-Wise Student Directory
               </h2>
               <p className="text-xs text-slate-400 mt-1">
-                Select a class to view its complete student roster, registration details, and roll list.
+                Select a class section to view its complete student roster, registration details, and roll list.
               </p>
             </div>
 
@@ -230,17 +225,17 @@ export const StudentManagementModule: React.FC<StudentManagementModuleProps> = (
 
           {/* Grid of Class Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-            {activeClassNames.map((clsName) => {
-              const stat = classStats[clsName] || { total: 0, sections: new Set(["A"]), students: [] };
-              const sectionsList = Array.from(stat.sections).join(", ");
+            {activeClasses.map((c) => {
+              const stat = classStats[c.id] || { total: 0, students: [] };
+              const secLabel = c.section || "A";
 
               return (
                 <div
-                  key={clsName}
+                  key={c.id}
                   onClick={() => {
-                    setSelectedClass(clsName);
+                    setSelectedClassId(c.id);
                     setSearchQuery("");
-                    setSectionFilter("All");
+                    setSectionFilter(secLabel);
                   }}
                   className="group bg-slate-900 border border-slate-800 hover:border-amber-500/50 rounded-3xl p-5 shadow-xl transition-all duration-300 hover:-translate-y-1.5 cursor-pointer flex flex-col justify-between relative overflow-hidden"
                 >
@@ -253,27 +248,35 @@ export const StudentManagementModule: React.FC<StudentManagementModuleProps> = (
                         🎓
                       </div>
                       <span className="text-[11px] font-bold text-slate-400 bg-slate-950 border border-slate-800 px-2.5 py-1 rounded-full">
-                        Sec: {sectionsList}
+                        Sec: {secLabel}
                       </span>
                     </div>
 
                     <div>
-                      <h3 className="font-heading font-extrabold text-base text-white group-hover:text-amber-400 transition-colors">
-                        {clsName}
+                      <h3 className="text-base font-extrabold text-white group-hover:text-amber-400 transition-colors">
+                        {c.name}
                       </h3>
-                      <p className="text-xs text-slate-400 mt-1">St. Joseph International School</p>
+                      <p className="text-xs text-slate-500 font-mono mt-0.5">
+                        Code: {c.code || c.name.replace(/class/i, "").trim()}
+                      </p>
+                      {c.class_teacher_name && (
+                        <p className="text-[11px] text-emerald-400 font-bold mt-1">
+                          Teacher: {c.class_teacher_name}
+                        </p>
+                      )}
                     </div>
                   </div>
 
-                  <div className="mt-5 pt-4 border-t border-slate-800/80 flex items-center justify-between relative z-10">
+                  <div className="pt-4 border-t border-slate-800/80 mt-4 flex items-center justify-between relative z-10">
                     <div>
-                      <span className="text-xl font-extrabold text-white">{stat.total}</span>
-                      <span className="text-[11px] text-slate-400 ml-1.5 font-medium">Students</span>
+                      <span className="text-xl font-extrabold text-amber-400 font-mono">
+                        {stat.total}
+                      </span>
+                      <span className="text-[11px] text-slate-500 ml-1.5 font-bold">Enrolled</span>
                     </div>
-
-                    <div className="bg-amber-500/10 group-hover:bg-amber-500 text-amber-400 group-hover:text-slate-950 text-xs font-bold px-3 py-1.5 rounded-xl transition-all flex items-center gap-1">
-                      <span>View Class ➔</span>
-                    </div>
+                    <span className="text-xs font-bold text-amber-400 group-hover:translate-x-1 transition-transform flex items-center gap-1">
+                      View Roster →
+                    </span>
                   </div>
                 </div>
               );
@@ -281,160 +284,142 @@ export const StudentManagementModule: React.FC<StudentManagementModuleProps> = (
           </div>
         </div>
       ) : (
-        /* ─── SCREEN 2: FULL CLASS STUDENT TABLE VIEW ─── */
-        <div className="space-y-6">
-          {/* Class Header Bar */}
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => setSelectedClass(null)}
-                className="bg-slate-950 border border-slate-800 hover:border-amber-400 text-slate-300 hover:text-white px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-md"
-              >
-                <ArrowLeft className="w-4 h-4 text-amber-400" />
-                <span>Back to All Classes</span>
-              </button>
+        /* ─── SCREEN 2: SELECTED CLASS STUDENT ROSTER VIEW ─── */
+        <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+          {/* Header Navigation & Actions */}
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => {
+                    setSelectedClassId(null);
+                    setSearchQuery("");
+                  }}
+                  className="p-2.5 bg-slate-950 hover:bg-slate-800 text-slate-300 hover:text-white rounded-xl border border-slate-800 transition-all flex items-center gap-2 text-xs font-bold shrink-0"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>← Back to Classes</span>
+                </button>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-2xl font-heading font-extrabold text-white">
+                      {selectedClassEntity.name}
+                    </h2>
+                    <span className="bg-amber-500/10 border border-amber-500/30 text-amber-400 font-mono font-bold text-xs px-2.5 py-0.5 rounded-lg">
+                      Sec {selectedClassEntity.section || "A"}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Viewing enrolled students list for {selectedClassEntity.name} (Section {selectedClassEntity.section || "A"}).
+                  </p>
+                </div>
+              </div>
 
-              <div>
-                <h2 className="text-xl font-heading font-extrabold text-white flex items-center gap-2.5">
-                  <span>{selectedClass}</span>
-                  <span className="text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30 px-3 py-1 rounded-full">
-                    {currentClassStudents.length} Registered Students
-                  </span>
-                </h2>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Complete student directory, roll roster, and contact information for {selectedClass}.
-                </p>
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="relative">
+                  <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Search student name, roll no, father..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:border-amber-400 focus:outline-none w-60"
+                  />
+                </div>
+
+                <button
+                  onClick={onOpenAdmissionModal}
+                  className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs px-4 py-2.5 rounded-xl flex items-center gap-2 shadow-lg transition-all"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>+ Full Admission Form</span>
+                </button>
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
-              {/* Section Filter */}
-              <div className="flex items-center gap-2 bg-slate-950 p-1.5 border border-slate-800 rounded-xl text-xs">
-                <Filter className="w-3.5 h-3.5 text-slate-400 ml-1" />
-                <span className="text-slate-400 font-medium">Sec:</span>
-                {["All", "A", "B", "C"].map((sec) => (
-                  <button
-                    key={sec}
-                    onClick={() => setSectionFilter(sec)}
-                    className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
-                      sectionFilter === sec
-                        ? "bg-amber-500 text-slate-950"
-                        : "text-slate-400 hover:text-white"
-                    }`}
-                  >
-                    {sec}
-                  </button>
-                ))}
+            {/* Quick Add Student Inline Bar */}
+            <form
+              onSubmit={handleQuickAddSubmit}
+              className="bg-slate-950 border border-slate-800 p-4 rounded-2xl flex flex-col md:flex-row items-center gap-3"
+            >
+              <div className="flex items-center gap-2 text-amber-400 font-extrabold text-xs shrink-0">
+                <Sparkles className="w-4 h-4" />
+                <span>Quick Add Student:</span>
               </div>
-
-              {/* Search Within Class */}
-              <div className="relative">
-                <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  placeholder="Search in this class..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:border-amber-400 focus:outline-none w-48"
-                />
-              </div>
-
-              <button
-                onClick={onOpenAdmissionModal}
-                className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow-md"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Add Student</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Quick Inline Student Add Form for Selected Class */}
-          <form
-            onSubmit={handleQuickAddSubmit}
-            className="bg-slate-900 border border-slate-800/80 rounded-2xl p-4 shadow-lg space-y-3"
-          >
-            <h4 className="text-xs font-bold text-amber-400 flex items-center gap-2">
-              <Sparkles className="w-4 h-4" /> Quick Register Student to {selectedClass}
-            </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
               <input
                 type="text"
                 placeholder="Student Full Name *"
                 value={quickStudent.name}
                 onChange={(e) => setQuickStudent({ ...quickStudent, name: e.target.value })}
                 required
-                className="p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:border-amber-400 focus:outline-none"
+                className="bg-slate-900 border border-slate-800 text-white text-xs rounded-xl px-3 py-2 flex-1 focus:border-amber-400 focus:outline-none"
+              />
+              <input
+                type="text"
+                placeholder="Father's Name"
+                value={quickStudent.father_name}
+                onChange={(e) => setQuickStudent({ ...quickStudent, father_name: e.target.value })}
+                className="bg-slate-900 border border-slate-800 text-white text-xs rounded-xl px-3 py-2 flex-1 focus:border-amber-400 focus:outline-none"
+              />
+              <input
+                type="text"
+                placeholder="Mobile No."
+                value={quickStudent.parent_mobile}
+                onChange={(e) => setQuickStudent({ ...quickStudent, parent_mobile: e.target.value })}
+                className="bg-slate-900 border border-slate-800 text-white text-xs rounded-xl px-3 py-2 w-32 focus:border-amber-400 focus:outline-none font-mono"
               />
               <input
                 type="date"
                 value={quickStudent.dob}
                 onChange={(e) => setQuickStudent({ ...quickStudent, dob: e.target.value })}
-                required
-                className="p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:border-amber-400 focus:outline-none"
-              />
-              <input
-                type="text"
-                placeholder="Father's Name *"
-                value={quickStudent.father_name}
-                onChange={(e) => setQuickStudent({ ...quickStudent, father_name: e.target.value })}
-                required
-                className="p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:border-amber-400 focus:outline-none"
-              />
-              <input
-                type="tel"
-                placeholder="Parent Mobile / WhatsApp *"
-                value={quickStudent.parent_mobile}
-                onChange={(e) => setQuickStudent({ ...quickStudent, parent_mobile: e.target.value })}
-                required
-                className="p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:border-amber-400 focus:outline-none"
+                className="bg-slate-900 border border-slate-800 text-white text-xs rounded-xl px-3 py-2 w-36 focus:border-amber-400 focus:outline-none font-mono"
               />
               <button
                 type="submit"
                 disabled={isAddingQuick}
-                className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs px-4 py-2.5 rounded-xl flex items-center justify-center gap-1.5 transition-all disabled:opacity-50"
+                className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs px-4 py-2 rounded-xl transition-all shrink-0"
               >
-                <Plus className="w-4 h-4" />
-                <span>{isAddingQuick ? "Saving..." : "Quick Add"}</span>
+                {isAddingQuick ? "Adding..." : "+ Quick Save"}
               </button>
-            </div>
-          </form>
+            </form>
+          </div>
 
-          {/* Student Complete Data Table */}
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
+          {/* Student Roster Table */}
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+              <h3 className="font-extrabold text-sm text-white flex items-center gap-2">
+                <Users className="w-4 h-4 text-emerald-400" /> Roster List ({currentClassStudents.length} Students)
+              </h3>
+            </div>
+
             {currentClassStudents.length === 0 ? (
               <div className="p-12 text-center space-y-3">
                 <Users className="w-12 h-12 text-slate-600 mx-auto" />
-                <h3 className="text-base font-bold text-slate-300">No Students Registered in {selectedClass}</h3>
-                <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                  Click "+ Add Admission Form" or use Quick Register above to add students to this class.
+                <h3 className="text-base font-bold text-slate-300">No Students Found in {selectedClassEntity.name} (Sec {selectedClassEntity.section || "A"})</h3>
+                <p className="text-xs text-slate-500 max-w-xs mx-auto">
+                  Use the Quick Add bar above or click "+ Full Admission Form" to register students.
                 </p>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs text-slate-300">
-                  <thead className="bg-slate-950 text-slate-400 font-bold uppercase tracking-wider text-[11px] border-b border-slate-800">
+                  <thead className="bg-slate-950 text-slate-400 font-bold uppercase border-b border-slate-800 text-[11px]">
                     <tr>
-                      <th className="py-4 px-4">SR / Roll No</th>
-                      <th className="py-4 px-4">Student Profile</th>
-                      <th className="py-4 px-4">Class & Sec</th>
-                      <th className="py-4 px-4">Date of Birth</th>
-                      <th className="py-4 px-4">Father Name</th>
-                      <th className="py-4 px-4">Parent Mobile</th>
-                      <th className="py-4 px-4">Status</th>
-                      <th className="py-4 px-4 text-right">Actions</th>
+                      <th className="py-3.5 px-4">Student Details</th>
+                      <th className="py-3.5 px-4">Class & Sec</th>
+                      <th className="py-3.5 px-4">D.O.B</th>
+                      <th className="py-3.5 px-4">Father Name</th>
+                      <th className="py-3.5 px-4">Contact Phone</th>
+                      <th className="py-3.5 px-4">Status</th>
+                      <th className="py-3.5 px-4 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800/60">
                     {currentClassStudents.map((student) => {
-                      const studentName = student.student_name || student.name || "Student";
-                      const srNo = student.admission_no || student.roll_no || student.form_no || student.id.substring(0, 6);
+                      const studentName = student.name || student.student_name || "Unnamed Student";
 
                       return (
                         <tr key={student.id} className="hover:bg-slate-800/40 transition-colors">
-                          <td className="py-4 px-4 font-mono font-bold text-amber-400">
-                            {srNo}
-                          </td>
                           <td className="py-4 px-4">
                             <div className="flex items-center gap-3">
                               <img
@@ -450,7 +435,7 @@ export const StudentManagementModule: React.FC<StudentManagementModuleProps> = (
                                   {studentName}
                                 </span>
                                 <span className="text-[11px] text-slate-500 font-mono">
-                                  Form: {student.form_no || "N/A"}
+                                  S.No / Adm: {student.admission_no || "N/A"}
                                 </span>
                               </div>
                             </div>

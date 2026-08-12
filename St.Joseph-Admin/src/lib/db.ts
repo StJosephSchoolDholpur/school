@@ -119,9 +119,12 @@ export interface AttendanceRecord {
   student_id: string;
   student_name: string;
   class: string;
+  section?: string;
   date: string;
   status: "Present" | "Absent" | "Late" | "Leave";
   remarks?: string;
+  marked_by?: string;
+  timestamp?: string;
   created_at?: string;
 }
 
